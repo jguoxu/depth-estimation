@@ -7,8 +7,9 @@ import tensorflow.keras.backend as K
 from tensorflow import keras
 from tensorflow.keras import layers
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Conv2D, MaxPooling2D
-from tensorflow.keras.layers import Dense, Dropout, Flatten
+from tensorflow.keras.layers import Dense, Dropout, Activation, Flatten, Conv2D, Input, MaxPooling2D, InputLayer,UpSampling2D, Reshape,UpSampling1D
+from tensorflow.keras.layers import BatchNormalization
+from tensorflow.keras.utils import multi_gpu_model
 
 # from scipy import imageio
 from PIL import Image
@@ -19,6 +20,8 @@ IMAGE_WIDTH = 304
 TARGET_HEIGHT = 55
 TARGET_WIDTH = 74
 
+<<<<<<< HEAD
+=======
 # def csv_inputs(csv_file_path='data/train.csv'):
 #     x_train = []
 #     y_train = []
@@ -38,15 +41,27 @@ TARGET_WIDTH = 74
 #             y_train.append(np.array(label))
 
 #     return np.array(x_train), np.array(y_train)
+>>>>>>> origin/master
 
 class NyuDepthGenerator(keras.utils.Sequence) :
 
     def __init__(self, batch_size, csv_path='data/train.csv') :
+<<<<<<< HEAD
+=======
         # self.csv_path = csv_path
+>>>>>>> origin/master
         self.batch_size = batch_size
 
         self.csv_file = open(csv_path, mode='r')
         self.csv_lines = self.csv_file.readlines()
+<<<<<<< HEAD
+
+
+    def __len__(self) :
+        return int(np.floor(len(self.csv_lines) / self.batch_size))
+
+
+=======
         self.length = int(len(self.csv_lines) / batch_size)
         self.count = 0
     
@@ -54,6 +69,7 @@ class NyuDepthGenerator(keras.utils.Sequence) :
         return self.length
   
   
+>>>>>>> origin/master
     def __getitem__(self, idx) :
         x_train = []
         y_train = []
@@ -69,13 +85,38 @@ class NyuDepthGenerator(keras.utils.Sequence) :
             label = label.resize((TARGET_HEIGHT, TARGET_WIDTH))
 
             x_train.append(np.array(example))
+            # flatten is needed because of the dense layer output is 1d
             y_train.append(np.array(label))
 
+<<<<<<< HEAD
+        return np.array(x_train) / 255.0, np.array(y_train) / 255.0
+
+
+# refered from: https://github.com/jahab/Depth-estimation/blob/master/Depth_Estimation_GD.ipynb
+def depth_loss(y_true, y_pred):
+    y_true = K.cast(y_true, dtype='float32')
+    y_pred = K.cast(y_pred, dtype='float32')
+
+    # without discarding infinity pixels, the loss will quickly gets to nan.
+    lnYTrue = tf.where(tf.math.is_inf(y_true), tf.ones_like(y_true), y_true)
+    lnYPred = tf.where(tf.math.is_inf(y_pred), tf.ones_like(y_pred), y_pred)
+
+    d_arr = K.cast(lnYTrue - lnYPred, dtype='float32')
+
+    log_diff = K.cast(K.sum(K.square(d_arr)) / 4070.0, dtype='float32')
+    penalty = K.square(K.sum(d_arr)) / K.cast(K.square(4070.0), dtype='float32')
+    
+    loss = log_diff+penalty
+
+    return loss
+
+=======
         print(str(np.array(x_train).shape))
         print(str(np.array(y_train).shape))
         print("count: " + str(self.count))
         self.count = self.count+1
         return np.array(x_train) / 255.0, np.array(y_train) / 255.0
+>>>>>>> origin/master
 
 
 def msr_loss(y_true, y_pred):
@@ -85,8 +126,59 @@ def msr_loss(y_true, y_pred):
     flatten_pred = K.flatten(y_pred)
     loss=K.mean(K.sum(K.square(flatten_true-flatten_pred)))
 
+    print ("y_true:")
+    K.print_tensor(y_true)
+
+    # print ("predict:")
+    # K.print_tensor(y_pred)
+
+    # d = K.log(y_true) - K.log(y_pred)
+    # log_diff = K.sum(K.square(d)) / 4070.0 # 4070 is number of pixels (74, 55)
+    # penalty = K.square(K.sum(d)) / K.square(4070.0)
+    # loss = log_diff - penalty
+
     return loss
 
+
+def model2():
+    model=Sequential()
+
+    model.add(Conv2D(96,(11,11),strides=(4,4),input_shape=[IMAGE_WIDTH, IMAGE_HEIGHT, 3],padding='same'))
+    model.add(BatchNormalization())
+    model.add(Activation("relu"))
+    model.add(MaxPooling2D(pool_size=(2,2)))
+
+    model.add(Conv2D(256,(5,5),padding='same'))
+    model.add(BatchNormalization())
+    model.add(Activation("relu"))
+    model.add(MaxPooling2D(pool_size=(2,2)))
+
+    model.add(Conv2D(384,(3,3),padding='same'))
+    model.add(BatchNormalization())
+    model.add(Activation("relu"))
+
+    model.add(Conv2D(384,(3,3),padding='same'))
+    model.add(BatchNormalization())
+    model.add(Activation("relu"))
+
+    model.add(Dense(256))
+    model.add(BatchNormalization())
+    model.add(Activation("relu"))
+    model.add(MaxPooling2D(pool_size=(2,2)))
+
+    model.add(Flatten())
+    model.add(Dense(4096))
+    model.add(BatchNormalization())
+    model.add(Activation("linear"))
+    model.add(Dropout(0.4))
+
+    model.add(Reshape((64, 64,1)))
+
+    model.add(UpSampling2D(size=(2,2)))
+    model.add(Conv2D(1,(55,74),padding='valid'))
+    model.add(BatchNormalization())
+    model.summary()
+    return model
 
 def model1():
     model = Sequential()
@@ -123,6 +215,19 @@ def model1():
 def main():
     print(tf.__version__)
 
+<<<<<<< HEAD
+    model = model2()
+    nyu_data_generator = NyuDepthGenerator(batch_size=10)
+
+    # parallel_model = multi_gpu_model(model, gpus=2)
+    # parallel_model.compile(optimizer=keras.optimizers.Adam(),  # Optimizer
+    #           # Loss function to minimize
+    #           loss=msr_loss,
+    #           # List of metrics to monitor
+    #           metrics=None)
+
+    model.compile(optimizer=keras.optimizers.Adam(),  # Optimizer
+=======
     # inputs = keras.Input(shape=(784,), name='digits')
     # x = layers.Dense(64, activation='relu', name='dense_1')(inputs)
     # x = layers.Dense(64, activation='relu', name='dense_2')(x)
@@ -151,8 +256,9 @@ def main():
     nyu_data_generator = NyuDepthGenerator(batch_size=10)
 
     model.compile(optimizer=keras.optimizers.RMSprop(),  # Optimizer
+>>>>>>> origin/master
               # Loss function to minimize
-              loss=msr_loss,
+              loss=depth_loss,
               # List of metrics to monitor
               metrics=None)
 
@@ -163,8 +269,12 @@ def main():
     # batch size is define in the generator thus passing None to batch_size
     # https://www.tensorflow.org/api_docs/python/tf/keras/Model#fit
     history = model.fit(x=nyu_data_generator,
+<<<<<<< HEAD
+                        epochs=10)#(x_val, y_val))
+=======
                         epochs=1,
                         validation_data=None, max_queue_size=1)#(x_val, y_val))
+>>>>>>> origin/master
 
     # history = model.fit_generator(nyu_data_generator, steps_per_epoch=5, epochs=1)
 
