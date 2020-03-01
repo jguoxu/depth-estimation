@@ -6,7 +6,7 @@ import random
 # import matplotlib.pyplot as plt
 
 # change this to your local path
-NYU_FILE_PATH = '/Users/jasonguo/Downloads/nyu_depth_v2_labeled.mat'
+NYU_FILE_PATH = 'data/nyu_depth_v2_labeled.mat'
 MAX_DEPTH_METER = 6.0
 
 def convert_nyu(path):
@@ -42,7 +42,8 @@ def convert_nyu(path):
     if not os.path.isdir('data'):
         os.mkdir('data')
 
-    for i in range(h5file['images'].shape[0]):
+    file_count = h5file['images'].shape[0]
+    for i in range(file_count):
         image = np.transpose(h5file['images'][i], (2, 1, 0))
         depth = np.transpose(h5file['depths'][i], (1, 0))
 
@@ -61,9 +62,7 @@ def convert_nyu(path):
         depth_im = Image.fromarray(np.uint8(depth))
         depth_im.save(depth_name)
 
-        print('saving file: %i' % i)
-        if i is 10:
-            break
+        print('saving file: %i out of %d' % (i, file_count))
 
     # write train_examples to csv
     with open('data/train.csv', 'w') as output:
