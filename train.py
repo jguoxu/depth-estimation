@@ -19,12 +19,43 @@ IMAGE_WIDTH = 304
 TARGET_HEIGHT = 55
 TARGET_WIDTH = 74
 
-def csv_inputs(csv_file_path='data/train.csv'):
-    x_train = []
-    y_train = []
-    with open(csv_file_path, mode='r') as csv_file:
-        lines = csv_file.readlines()
-        for line in lines:
+# def csv_inputs(csv_file_path='data/train.csv'):
+#     x_train = []
+#     y_train = []
+#     with open(csv_file_path, mode='r') as csv_file:
+#         lines = csv_file.readlines()
+#         for line in lines:
+#             line = line.replace('\n', '')
+#             pairs = line.split(',')
+
+#             example = Image.open(pairs[0])
+#             label = Image.open(pairs[1])
+
+#             example = example.resize((IMAGE_HEIGHT, IMAGE_WIDTH))
+#             label = label.resize((TARGET_HEIGHT, TARGET_WIDTH))
+
+#             x_train.append(np.array(example))
+#             y_train.append(np.array(label))
+
+#     return np.array(x_train), np.array(y_train)
+
+class NyuDepthGenerator(keras.utils.Sequence) :
+
+    def __init__(self, batch_size, csv_path='data/train.csv') :
+        self.batch_size = batch_size
+
+        self.csv_file = open(csv_path, mode='r')
+        self.csv_lines = self.csv_file.readlines()
+    
+    def __len__(self) :
+        return int(np.floor(len(self.csv_lines) / self.batch_size))
+  
+  
+    def __getitem__(self, idx) :
+        x_train = []
+        y_train = []
+        for i in range(idx * self.batch_size, (idx + 1) * self.batch_size):
+            line = self.csv_lines[i]
             line = line.replace('\n', '')
             pairs = line.split(',')
 
@@ -35,29 +66,10 @@ def csv_inputs(csv_file_path='data/train.csv'):
             label = label.resize((TARGET_HEIGHT, TARGET_WIDTH))
 
             x_train.append(np.array(example))
-            y_train.append(np.array(label))
+            # flatten is needed because of the dense layer output is 1d
+            y_train.append(np.array(label).flatten())
 
-    return np.array(x_train), np.array(y_train)
-
-class NyuDepthGenerator(keras.utils.Sequence) :
-  
-  def __init__(self, image_filenames, labels, batch_size) :
-    self.image_filenames = image_filenames
-    self.labels = labels
-    self.batch_size = batch_size
-    
-    
-  def __len__(self) :
-    return (np.ceil(len(self.image_filenames) / float(self.batch_size))).astype(np.int)
-  
-  
-  def __getitem__(self, idx) :
-    batch_x = self.image_filenames[idx * self.batch_size : (idx+1) * self.batch_size]
-    batch_y = self.labels[idx * self.batch_size : (idx+1) * self.batch_size]
-    
-    return np.array([
-            resize(imread('/content/all_images/' + str(file_name)), (80, 80, 3))
-               for file_name in batch_x])/255.0, np.array(batch_y)
+        return np.array(x_train) / 255.0, np.array(y_train) / 255.0
 
 
 def msr_loss(y_true, y_pred):
@@ -110,38 +122,42 @@ def main():
 
     # model = keras.Model(inputs=inputs, outputs=outputs)
 
-    model = model1
+    # model = model1
 
-    x_train, y_train = csv_inputs()
-    x_train = x_train / 255.0
-    y_train = y_train / 255.0
+    # x_train, y_train = csv_inputs()
+    # x_train = x_train / 255.0
+    # y_train = y_train / 255.0
 
-    # Reserve 1 samples for validation
-    x_val = x_train[-1:]
-    y_val = y_train[-1:]
-    x_train = x_train[:-1]
-    y_train = y_train[:-1]
+    # # Reserve 1 samples for validation
+    # x_val = x_train[-1:]
+    # y_val = y_train[-1:]
+    # x_train = x_train[:-1]
+    # y_train = y_train[:-1]
 
-    print(x_val.shape)
-    print(y_val.shape)
-    print(x_train.shape)
-    print(y_train.shape)
+    # print(x_val.shape)
+    # print(y_val.shape)
+    # print(x_train.shape)
+    # print(y_train.shape)
 
     model = model1()
+    nyu_data_generator = NyuDepthGenerator(batch_size=10)
 
-    model.compile(optimizer=keras.optimizers.RMSprop(),  # Optimizer
+    model.compile(optimizer=keras.optimizers.Adam(),  # Optimizer
               # Loss function to minimize
               loss=msr_loss,
               # List of metrics to monitor
-              metrics=[msr_loss])
+              metrics=None)
 
     print("model metric names: " + str(model.metrics_names))
 
     print('# Fit model on training data')
-    history = model.fit(x_train, y_train,
-                        batch_size=10,
-                        epochs=10,
-                        validation_data=(x_val, y_val))
+    # when using data generate, x contains both X and Y. 
+    # batch size is define in the generator thus passing None to batch_size
+    # https://www.tensorflow.org/api_docs/python/tf/keras/Model#fit
+    history = model.fit(x=nyu_data_generator,
+                        epochs=10)#(x_val, y_val))
+
+    # history = model.fit_generator(nyu_data_generator, steps_per_epoch=5, epochs=1)
 
     print('\nhistory dict:', history.history)
 
