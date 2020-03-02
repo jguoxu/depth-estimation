@@ -16,6 +16,7 @@ from tensorflow.keras.utils import multi_gpu_model
 # from scipy import imageio
 from PIL import Image
 import numpy as np
+import matplotlib.pyplot as plt
 
 IMAGE_HEIGHT = 228
 IMAGE_WIDTH = 304
@@ -101,7 +102,7 @@ def msr_loss(y_true, y_pred):
 def model2():
     model=Sequential()
 
-    model.add(Conv2D(96,(11,11),strides=(4,4),input_shape=[IMAGE_WIDTH, IMAGE_HEIGHT, 3],padding='same'))
+    model.add(Conv2D(96,(11,11),strides=(4,4),input_shape=[IMAGE_HEIGHT, IMAGE_WIDTH, 3],padding='same'))
     model.add(BatchNormalization())
     model.add(Activation("relu"))
     model.add(MaxPooling2D(pool_size=(2,2)))
@@ -170,7 +171,7 @@ def model1():
     return model
 
 
-def main():
+def train():
     print(tf.__version__)
 
     model = model2()
@@ -185,14 +186,13 @@ def main():
     print("model metric names: " + str(model.metrics_names))
 
     checkpoint_path = "data/coarse-checkpoint/cp.ckpt"
+    checkpoint_dir = os.path.dirname(checkpoint_path)
 
-    if os.path.isdir(checkpoint_path):
-        checkpoint_dir = os.path.dirname(checkpoint_path)
-        model.load_weights(checkpoint_dir)
+    if os.path.isdir(checkpoint_dir):
+        model.load_weights(checkpoint_path)
         print("Loaded coarse model weights.")
     else:
         print("No coarse model weights loaded.")
-
 
     # Create a callback that saves the model's weights
     cp_callback = tf.keras.callbacks.ModelCheckpoint(filepath=checkpoint_path,
@@ -221,6 +221,47 @@ def main():
     # print('predictions shape:', predictions.shape)
 
 
+def predict():
+    print(tf.__version__)
+    print("Perdicting using model")
+
+    model = model2()
+    nyu_data_generator = NyuDepthGenerator(batch_size=1, csv_path='data/dev.csv')
+
+    model.compile(optimizer=keras.optimizers.Adam(),  # Optimizer
+              # Loss function to minimize
+              loss=depth_loss,
+              # List of metrics to monitor
+              metrics=None)
+
+    print("model metric names: " + str(model.metrics_names))
+
+    checkpoint_path = "data/coarse-checkpoint/cp.ckpt"
+
+    if os.path.isdir(checkpoint_path):
+        checkpoint_dir = os.path.dirname(checkpoint_path)
+        model.load_weights(checkpoint_dir)
+        print("Loaded coarse model weights.")
+    else:
+        print("No coarse model weights loaded.")
+
+    # Evaluate the model on the test data using `evaluate`
+    # print('\n# Evaluate on test data')
+    # results = model.evaluate(x_test, y_test, batch_size=128)
+    # print('test loss, test acc:', results)
+
+    # # Generate predictions (probabilities -- the output of the last layer)
+    # # on new data using `predict`
+    # print('\n# Generate predictions for 3 samples')
+    predictions = model.predict(nyu_data_generator)
+    print(predictions.shape)
+
+    print(predictions[0] * 255.0)
+    plt.imshow(np.reshape(predictions[0], [TARGET_HEIGHT, TARGET_WIDTH]))
+    plt.show()
+
+    # print('predictions shape:', predictions.shape)
+
 def debug_display_rgbd_pair(rgb, d):
     img = Image.fromarray(rgb, 'RGB')
     img.show()
@@ -232,7 +273,8 @@ def debug_display_rgbd_pair(rgb, d):
 
 
 if __name__ == '__main__':
-    main()
+    train()
+    # predict()
 
     # x_train, y_train = csv_inputs()
     # print("x_train shape: " + str(x_train.shape))
