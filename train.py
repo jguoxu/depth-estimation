@@ -1,11 +1,14 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
+import os.path
+
 # TensorFlow and tf.keras
 import tensorflow as tf
 import tensorflow.keras.backend as K
 
 from tensorflow import keras
 from tensorflow.keras import layers
+from tensorflow.keras.callbacks import ModelCheckpoint
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, Dropout, Activation, Flatten, Conv2D, Input, MaxPooling2D, InputLayer,UpSampling2D, Reshape,UpSampling1D
 from tensorflow.keras.layers import BatchNormalization
@@ -19,11 +22,13 @@ IMAGE_HEIGHT = 228
 IMAGE_WIDTH = 304
 TARGET_HEIGHT = 55
 TARGET_WIDTH = 74
-
+CHECKPOINT_PATH = 'checkpoints/ckpt'
+CHECKPOINT_DIR = os.path.dirname(CHECKPOINT_PATH)
 
 class NyuDepthGenerator(keras.utils.Sequence) :
 
     def __init__(self, batch_size, csv_path='data/train.csv') :
+        tf.keras.backend.clear_session() #Reset notebook state
         self.batch_size = batch_size
 
         self.csv_file = open(csv_path, mode='r')
@@ -171,7 +176,20 @@ def model1():
 def main():
     print(tf.__version__)
 
+    # Create a callback that saves the model's weights with every epoch (save_freq=1)
+    cp_callback = tf.keras.callbacks.ModelCheckpoint(filepath=CHECKPOINT_PATH,
+                                                 save_weights_only=True,
+                                                 verbose=1,
+                                                 save_freq=1)
     model = model2()
+
+    latest_checkpoint = tf.train.latest_checkpoint(CHECKPOINT_DIR)
+    if latest_checkpoint:
+        print("\nRestored model from checkpoint")
+        model.load_weights(latest_checkpoint)
+    else: 
+        print("\nTraining model from scratch")
+        
     nyu_data_generator = NyuDepthGenerator(batch_size=10)
 
     # parallel_model = multi_gpu_model(model, gpus=2)
@@ -194,7 +212,7 @@ def main():
     # batch size is define in the generator thus passing None to batch_size
     # https://www.tensorflow.org/api_docs/python/tf/keras/Model#fit
     history = model.fit(x=nyu_data_generator,
-                        epochs=10)#(x_val, y_val))
+                        epochs=10, callbacks=[cp_callback])#(x_val, y_val))
 
     # history = model.fit_generator(nyu_data_generator, steps_per_epoch=5, epochs=1)
 
