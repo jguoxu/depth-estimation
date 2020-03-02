@@ -72,7 +72,7 @@ def depth_loss(y_true, y_pred):
     log_diff = K.cast(K.sum(K.square(d_arr)) / 4070.0, dtype='float32')
     penalty = K.square(K.sum(d_arr)) / K.cast(K.square(4070.0), dtype='float32')
     
-    loss = log_diff+penalty
+    loss = log_diff + penalty
 
     return loss
 
@@ -176,6 +176,7 @@ def train():
 
     model = model2()
     nyu_data_generator = NyuDepthGenerator(batch_size=10)
+    eval_data_generator = NyuDepthGenerator(batch_size=1, csv_path='data/dev.csv')
 
     model.compile(optimizer=keras.optimizers.Adam(),  # Optimizer
               # Loss function to minimize
@@ -204,6 +205,7 @@ def train():
     # batch size is define in the generator thus passing None to batch_size
     # https://www.tensorflow.org/api_docs/python/tf/keras/Model#fit
     history = model.fit(x=nyu_data_generator,
+                        validation_data=eval_data_generator,
                         epochs=10,
                         callbacks=[cp_callback])
 
