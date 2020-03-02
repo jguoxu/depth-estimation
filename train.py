@@ -1,5 +1,7 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
+import os
+
 # TensorFlow and tf.keras
 import tensorflow as tf
 import tensorflow.keras.backend as K
@@ -174,13 +176,6 @@ def main():
     model = model2()
     nyu_data_generator = NyuDepthGenerator(batch_size=10)
 
-    # parallel_model = multi_gpu_model(model, gpus=2)
-    # parallel_model.compile(optimizer=keras.optimizers.Adam(),  # Optimizer
-    #           # Loss function to minimize
-    #           loss=msr_loss,
-    #           # List of metrics to monitor
-    #           metrics=None)
-
     model.compile(optimizer=keras.optimizers.Adam(),  # Optimizer
               # Loss function to minimize
               loss=depth_loss,
@@ -189,14 +184,28 @@ def main():
 
     print("model metric names: " + str(model.metrics_names))
 
+    checkpoint_path = "data/coarse-checkpoint/cp.ckpt"
+
+    if os.path.isdir(checkpoint_path):
+        checkpoint_dir = os.path.dirname(checkpoint_path)
+        model.load_weights(checkpoint_dir)
+        print("Loaded coarse model weights.")
+    else:
+        print("No coarse model weights loaded.")
+
+
+    # Create a callback that saves the model's weights
+    cp_callback = tf.keras.callbacks.ModelCheckpoint(filepath=checkpoint_path,
+                                                    save_weights_only=True,
+                                                    verbose=1)
+
     print('# Fit model on training data')
     # when using data generate, x contains both X and Y. 
     # batch size is define in the generator thus passing None to batch_size
     # https://www.tensorflow.org/api_docs/python/tf/keras/Model#fit
     history = model.fit(x=nyu_data_generator,
-                        epochs=10)#(x_val, y_val))
-
-    # history = model.fit_generator(nyu_data_generator, steps_per_epoch=5, epochs=1)
+                        epochs=10,
+                        callbacks=[cp_callback])
 
     print('\nhistory dict:', history.history)
 
@@ -224,6 +233,7 @@ def debug_display_rgbd_pair(rgb, d):
 
 if __name__ == '__main__':
     main()
+
     # x_train, y_train = csv_inputs()
     # print("x_train shape: " + str(x_train.shape))
     # print("y_train shape: " + str(y_train.shape))
