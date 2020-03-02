@@ -20,56 +20,20 @@ IMAGE_WIDTH = 304
 TARGET_HEIGHT = 55
 TARGET_WIDTH = 74
 
-<<<<<<< HEAD
-=======
-# def csv_inputs(csv_file_path='data/train.csv'):
-#     x_train = []
-#     y_train = []
-#     with open(csv_file_path, mode='r') as csv_file:
-#         lines = csv_file.readlines()
-#         for line in lines:
-#             line = line.replace('\n', '')
-#             pairs = line.split(',')
-
-#             example = Image.open(pairs[0])
-#             label = Image.open(pairs[1])
-
-#             example = example.resize((IMAGE_HEIGHT, IMAGE_WIDTH))
-#             label = label.resize((TARGET_HEIGHT, TARGET_WIDTH))
-
-#             x_train.append(np.array(example))
-#             y_train.append(np.array(label))
-
-#     return np.array(x_train), np.array(y_train)
->>>>>>> origin/master
 
 class NyuDepthGenerator(keras.utils.Sequence) :
 
     def __init__(self, batch_size, csv_path='data/train.csv') :
-<<<<<<< HEAD
-=======
-        # self.csv_path = csv_path
->>>>>>> origin/master
         self.batch_size = batch_size
 
         self.csv_file = open(csv_path, mode='r')
         self.csv_lines = self.csv_file.readlines()
-<<<<<<< HEAD
 
 
     def __len__(self) :
         return int(np.floor(len(self.csv_lines) / self.batch_size))
 
 
-=======
-        self.length = int(len(self.csv_lines) / batch_size)
-        self.count = 0
-    
-    def __len__(self) :
-        return self.length
-  
-  
->>>>>>> origin/master
     def __getitem__(self, idx) :
         x_train = []
         y_train = []
@@ -88,7 +52,6 @@ class NyuDepthGenerator(keras.utils.Sequence) :
             # flatten is needed because of the dense layer output is 1d
             y_train.append(np.array(label))
 
-<<<<<<< HEAD
         return np.array(x_train) / 255.0, np.array(y_train) / 255.0
 
 
@@ -110,13 +73,6 @@ def depth_loss(y_true, y_pred):
 
     return loss
 
-=======
-        print(str(np.array(x_train).shape))
-        print(str(np.array(y_train).shape))
-        print("count: " + str(self.count))
-        self.count = self.count+1
-        return np.array(x_train) / 255.0, np.array(y_train) / 255.0
->>>>>>> origin/master
 
 
 def msr_loss(y_true, y_pred):
@@ -215,7 +171,6 @@ def model1():
 def main():
     print(tf.__version__)
 
-<<<<<<< HEAD
     model = model2()
     nyu_data_generator = NyuDepthGenerator(batch_size=10)
 
@@ -227,36 +182,6 @@ def main():
     #           metrics=None)
 
     model.compile(optimizer=keras.optimizers.Adam(),  # Optimizer
-=======
-    # inputs = keras.Input(shape=(784,), name='digits')
-    # x = layers.Dense(64, activation='relu', name='dense_1')(inputs)
-    # x = layers.Dense(64, activation='relu', name='dense_2')(x)
-    # outputs = layers.Dense(10, name='predictions')(x)
-
-    # model = keras.Model(inputs=inputs, outputs=outputs)
-
-    # model = model1
-
-    # x_train, y_train = csv_inputs()
-    # x_train = x_train / 255.0
-    # y_train = y_train / 255.0
-
-    # # Reserve 1 samples for validation
-    # x_val = x_train[-1:]
-    # y_val = y_train[-1:]
-    # x_train = x_train[:-1]
-    # y_train = y_train[:-1]
-
-    # print(x_val.shape)
-    # print(y_val.shape)
-    # print(x_train.shape)
-    # print(y_train.shape)
-
-    model = model1()
-    nyu_data_generator = NyuDepthGenerator(batch_size=10)
-
-    model.compile(optimizer=keras.optimizers.RMSprop(),  # Optimizer
->>>>>>> origin/master
               # Loss function to minimize
               loss=depth_loss,
               # List of metrics to monitor
@@ -269,12 +194,7 @@ def main():
     # batch size is define in the generator thus passing None to batch_size
     # https://www.tensorflow.org/api_docs/python/tf/keras/Model#fit
     history = model.fit(x=nyu_data_generator,
-<<<<<<< HEAD
                         epochs=10)#(x_val, y_val))
-=======
-                        epochs=1,
-                        validation_data=None, max_queue_size=1)#(x_val, y_val))
->>>>>>> origin/master
 
     # history = model.fit_generator(nyu_data_generator, steps_per_epoch=5, epochs=1)
 
