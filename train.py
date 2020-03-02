@@ -174,18 +174,18 @@ def main():
     model = model2()
     nyu_data_generator = NyuDepthGenerator(batch_size=10)
 
-    # parallel_model = multi_gpu_model(model, gpus=2)
-    # parallel_model.compile(optimizer=keras.optimizers.Adam(),  # Optimizer
-    #           # Loss function to minimize
-    #           loss=msr_loss,
-    #           # List of metrics to monitor
-    #           metrics=None)
-
-    model.compile(optimizer=keras.optimizers.Adam(),  # Optimizer
+    parallel_model = multi_gpu_model(model, gpus=2)
+    parallel_model.compile(optimizer=keras.optimizers.Adam(),  # Optimizer
               # Loss function to minimize
-              loss=depth_loss,
+              loss=msr_loss,
               # List of metrics to monitor
               metrics=None)
+
+    # model.compile(optimizer=keras.optimizers.Adam(),  # Optimizer
+    #           # Loss function to minimize
+    #           loss=depth_loss,
+    #           # List of metrics to monitor
+    #           metrics=None)
 
     print("model metric names: " + str(model.metrics_names))
 
