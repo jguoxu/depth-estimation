@@ -3,18 +3,19 @@ import numpy as np
 import h5py
 from PIL import Image
 import random
-# import matplotlib.pyplot as plt
 
-# change this to your local path
+NYU_FILE_URL = 'http://horatio.cs.nyu.edu/mit/silberman/nyu_depth_v2/nyu_depth_v2_labeled.mat'
 NYU_FILE_PATH = 'data/nyu_depth_v2_labeled.mat'
+TRAIN_FILE_PATH = 'data/train'
 MAX_DEPTH_METER = 6.0
 
 def convert_nyu(path):
     if not os.path.isfile(path):
-        print('file not exist: ' + NYU_FILE_PATH)
-        return
+        print('File not exist: %s, starting download NYU dataset' % NYU_FILE_PATH)
+        filename = wget.download(NYU_FILE_URL, out="data")
+        print('\nDownloaded: ', filename)
 
-    print('Load dataset: %s' % (path))
+    print('Loading dataset: %s' % (path))
     h5file = h5py.File(path, 'r')
 
     # # print all mat variabls:
@@ -39,8 +40,8 @@ def convert_nyu(path):
     # training example contain a list of rgb depth pairs.
     train_examples = []
 
-    if not os.path.isdir('data'):
-        os.mkdir('data')
+    if not os.path.isdir(TRAIN_FILE_PATH):
+        os.mkdir(TRAIN_FILE_PATH)
 
     file_count = h5file['images'].shape[0]
     for i in range(file_count):
@@ -51,8 +52,8 @@ def convert_nyu(path):
         # to make sure all depth image are distance is scaled proportionally.
         depth = (depth / MAX_DEPTH_METER) * 255.0
 
-        image_name = os.path.join('data', '%05d_c.png' % (i))
-        depth_name = os.path.join('data', '%05d_d.png' % (i))
+        image_name = os.path.join(TRAIN_FILE_PATH, '%05d_c.png' % (i))
+        depth_name = os.path.join(TRAIN_FILE_PATH, '%05d_d.png' % (i))
         train_examples.append((image_name, depth_name))
 
         # save to local png file.
@@ -62,7 +63,7 @@ def convert_nyu(path):
         depth_im = Image.fromarray(np.uint8(depth))
         depth_im.save(depth_name)
 
-        print('saving file: %i out of %d' % (i, file_count))
+        print('Saved file: %i out of %d' % (i, file_count))
 
     # write train_examples to csv
     with open('data/train.csv', 'w') as output:
