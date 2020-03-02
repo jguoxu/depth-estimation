@@ -1,8 +1,9 @@
 import os
 import numpy as np
 import h5py
-from PIL import Image
 import random
+import wget
+from PIL import Image
 
 NYU_FILE_URL = 'http://horatio.cs.nyu.edu/mit/silberman/nyu_depth_v2/nyu_depth_v2_labeled.mat'
 NYU_FILE_PATH = 'data/nyu_depth_v2_labeled.mat'

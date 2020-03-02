@@ -7,6 +7,7 @@ cs230 final project
 pip install h5py
 pip install Pillow
 pip install matplotlib
+pip isntall wget
 ```
 
 https://matplotlib.org/2.0.0/users/installing.html
