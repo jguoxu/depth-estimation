@@ -22,6 +22,7 @@ IMAGE_HEIGHT = 228
 IMAGE_WIDTH = 304
 TARGET_HEIGHT = 55
 TARGET_WIDTH = 74
+
 COARSE_CHECKPOINT_PATH = 'checkpoints/coarse/coarse_ckpt'
 COARSE_CHECKPOINT_DIR = os.path.dirname(COARSE_CHECKPOINT_PATH)
 
@@ -177,6 +178,7 @@ def main():
     print(tf.__version__)
 
     # Create a callback that saves the model's weights with every epoch (save_freq=1)
+
     cp_callback = tf.keras.callbacks.ModelCheckpoint(filepath=COARSE_CHECKPOINT_PATH,
                                                  save_weights_only=True,
                                                  verbose=1,
@@ -184,6 +186,7 @@ def main():
     model = model2()
 
     latest_checkpoint = tf.train.latest_checkpoint(COARSE_CHECKPOINT_DIR)
+
     if latest_checkpoint:
         print("\nRestored model from checkpoint")
         model.load_weights(latest_checkpoint)
