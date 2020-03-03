@@ -174,7 +174,7 @@ def main():
     model = model2()
     nyu_data_generator = NyuDepthGenerator(batch_size=10)
 
-    parallel_model = multi_gpu_model(model, gpus=2)
+    parallel_model = multi_gpu_model(model, gpus=4)
     parallel_model.compile(optimizer=keras.optimizers.Adam(),  # Optimizer
               # Loss function to minimize
               loss=msr_loss,
@@ -193,7 +193,7 @@ def main():
     # when using data generate, x contains both X and Y. 
     # batch size is define in the generator thus passing None to batch_size
     # https://www.tensorflow.org/api_docs/python/tf/keras/Model#fit
-    history = model.fit(x=nyu_data_generator,
+    history = parallel_model.fit(x=nyu_data_generator,
                         epochs=10)#(x_val, y_val))
 
     # history = model.fit_generator(nyu_data_generator, steps_per_epoch=5, epochs=1)
