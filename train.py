@@ -76,14 +76,13 @@ def depth_loss(y_true, y_pred):
 
 
 def msr_loss(y_true, y_pred):
-    print(y_true)
+    # print(y_true)
 
     flatten_true = K.flatten(y_true)
     flatten_pred = K.flatten(y_pred)
     loss=K.mean(K.sum(K.square(flatten_true-flatten_pred)))
 
-    print ("y_true:")
-    K.print_tensor(y_true)
+    # K.print_tensor(y_true)
 
     # print ("predict:")
     # K.print_tensor(y_pred)
@@ -177,7 +176,7 @@ def main():
     parallel_model = multi_gpu_model(model, gpus=4)
     parallel_model.compile(optimizer=keras.optimizers.Adam(),  # Optimizer
               # Loss function to minimize
-              loss=msr_loss,
+              loss=depth_loss,
               # List of metrics to monitor
               metrics=None)
 
