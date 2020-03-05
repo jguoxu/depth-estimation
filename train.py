@@ -17,6 +17,7 @@ from tensorflow.keras.utils import multi_gpu_model
 # from scipy import imageio
 from PIL import Image
 import numpy as np
+import matplotlib.pyplot as plt
 
 IMAGE_HEIGHT = 228
 IMAGE_WIDTH = 304
@@ -25,6 +26,7 @@ TARGET_WIDTH = 74
 
 COARSE_CHECKPOINT_PATH = 'checkpoints/coarse/coarse_ckpt'
 COARSE_CHECKPOINT_DIR = os.path.dirname(COARSE_CHECKPOINT_PATH)
+PREDICT_FILE_PATH = 'data/predict'
 
 class NyuDepthGenerator(keras.utils.Sequence) :
 
@@ -57,8 +59,8 @@ class NyuDepthGenerator(keras.utils.Sequence) :
             x_train.append(np.array(example))
             # flatten is needed because of the dense layer output is 1d
             y_train.append(np.array(label))
-
-        return np.array(x_train) / 255.0, np.array(y_train) / 255.0
+        # (isinghal): Not sure if we should divide input by 255
+        return np.array(x_train) / 1.0, np.array(y_train) / 255.0
 
 
 # refered from: https://github.com/jahab/Depth-estimation/blob/master/Depth_Estimation_GD.ipynb
@@ -181,8 +183,7 @@ def main():
 
     cp_callback = tf.keras.callbacks.ModelCheckpoint(filepath=COARSE_CHECKPOINT_PATH,
                                                  save_weights_only=True,
-                                                 verbose=1,
-                                                 save_freq='epoch')
+                                                 verbose=1)
     model = model2()
 
     latest_checkpoint = tf.train.latest_checkpoint(COARSE_CHECKPOINT_DIR)
@@ -214,12 +215,12 @@ def main():
     # when using data generate, x contains both X and Y. 
     # batch size is define in the generator thus passing None to batch_size
     # https://www.tensorflow.org/api_docs/python/tf/keras/Model#fit
-    history = model.fit(x=nyu_data_generator,
-                        epochs=10, callbacks=[cp_callback])#(x_val, y_val))
+    #history = model.fit(x=nyu_data_generator,
+     #                   epochs=5, callbacks=[cp_callback])#(x_val, y_val))
 
-    # history = model.fit_generator(nyu_data_generator, steps_per_epoch=5, epochs=1)
+    #history = model.fit_generator(nyu_data_generator, steps_per_epoch=5, epochs=1)
 
-    print('\nhistory dict:', history.history)
+    #print('\nhistory dict:', history.history)
 
     # Evaluate the model on the test data using `evaluate`
     # print('\n# Evaluate on test data')
@@ -229,8 +230,23 @@ def main():
     # # Generate predictions (probabilities -- the output of the last layer)
     # # on new data using `predict`
     # print('\n# Generate predictions for 3 samples')
-    # predictions = model.predict(x_test[:3])
-    # print('predictions shape:', predictions.shape)
+    eval_data_generator = NyuDepthGenerator(batch_size=1)
+    result = model.evaluate_generator(generator=eval_data_generator, steps=1)
+    print("test loss: ", result)
+    if not os.path.isdir(PREDICT_FILE_PATH):
+        os.mkdir(PREDICT_FILE_PATH)
+    predictions = model.predict_generator(generator=eval_data_generator, steps=2)
+    print('predictions shape:', predictions.shape)
+    for i in len(predictions.shape[0]):
+        predictions[i] = (predictions[i] /  np.max(predictions[i])) * 255.0
+        image_name = os.path.join(PREDICT_FILE_PATH, '%05d_d.png' % (i))
+        image_im = Image.fromarray(np.uint8(predictions[i].reshape(TARGET_HEIGHT, TARGET_WIDTH)), mode="L")
+        image_im.save(image_name)
+    # predictions[0] = (predictions[0] / np.max(predictions[0])) * 255.0
+    # print(predictions[0].reshape(TARGET_HEIGHT, TARGET_WIDTH))
+    # image_name = os.path.join(PREDICT_FILE_PATH, '%05d_d.png' % (1))
+    # image_im = Image.fromarray(np.uint8(predictions[0].reshape(TARGET_HEIGHT, TARGET_WIDTH)), mode="L")
+    # image_im.save(image_name)
 
 
 def debug_display_rgbd_pair(rgb, d):

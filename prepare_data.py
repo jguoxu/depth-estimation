@@ -51,7 +51,7 @@ def convert_nyu(path):
 
         # Do not use max depth to scale, instead use constant MAX_DEPTH_METER
         # to make sure all depth image are distance is scaled proportionally.
-        depth = (depth / MAX_DEPTH_METER) * 255.0
+        depth = (depth / np.max(depth)) * 255.0
 
         image_name = os.path.join(TRAIN_FILE_PATH, '%05d_c.png' % (i))
         depth_name = os.path.join(TRAIN_FILE_PATH, '%05d_d.png' % (i))
