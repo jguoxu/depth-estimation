@@ -216,31 +216,32 @@ def main():
     # when using data generate, x contains both X and Y. 
     # batch size is define in the generator thus passing None to batch_size
     # https://www.tensorflow.org/api_docs/python/tf/keras/Model#fit
-    history = model.fit(x=nyu_data_generator,
-                       epochs=5, callbacks=[cp_callback])
+    # history = model.fit(x=nyu_data_generator,
+    #                    epochs=5, callbacks=[cp_callback])
 
     # history = model.fit_generator(nyu_data_generator, steps_per_epoch=5, epochs=1)
 
-    print('\nhistory dict:', history.history)
+    # print('\nhistory dict:', history.history)
 
     # Evaluate the model on the test data using `evaluate`
     # print('\n# Evaluate on test data')
     # results = model.evaluate(x_test, y_test, batch_size=128)
     # print('test loss, test acc:', results)
 
-    # print('\n# Generate predictions for 3 samples')
-    # eval_data_generator = NyuDepthGenerator(batch_size=1)
-    # result = model.evaluate_generator(generator=eval_data_generator, steps=1)
-    # print("test loss: ", result)
-    # if not os.path.isdir(PREDICT_FILE_PATH):
-    #     os.mkdir(PREDICT_FILE_PATH)
-    # predictions = model.predict_generator(generator=eval_data_generator, steps=2)
-    # print('predictions shape:', predictions.shape)
-    # for i in len(predictions.shape[0]):
-    #     predictions[i] = (predictions[i] /  np.max(predictions[i])) * 255.0
-    #     image_name = os.path.join(PREDICT_FILE_PATH, '%05d_d.png' % (i))
-    #     image_im = Image.fromarray(np.uint8(predictions[i].reshape(TARGET_HEIGHT, TARGET_WIDTH)), mode="L")
-    #     image_im.save(image_name)
+    print('\n# Generate predictions for 3 samples')
+    eval_data_generator = NyuDepthGenerator(batch_size=1)
+    result = model.evaluate_generator(generator=eval_data_generator, steps=1)
+    print("test loss: ", result)
+    if not os.path.isdir(PREDICT_FILE_PATH):
+        os.mkdir(PREDICT_FILE_PATH)
+    predictions = model.predict_generator(generator=eval_data_generator, steps=2)
+    
+    print('predictions shape:', predictions.shape)
+    for i in range(predictions.shape[0]):
+        predictions[i] = (predictions[i] /  np.max(predictions[i])) * 255.0
+        image_name = os.path.join(PREDICT_FILE_PATH, '%05d_d.png' % (i))
+        image_im = Image.fromarray(np.uint8(predictions[i].reshape(TARGET_WIDTH, TARGET_HEIGHT)), mode="L")
+        image_im.save(image_name)
 
 
 def debug_display_rgbd_pair(rgb, d):
