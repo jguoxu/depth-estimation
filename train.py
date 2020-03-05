@@ -23,6 +23,10 @@ TARGET_WIDTH = 74
 
 COARSE_CHECKPOINT_PATH = 'checkpoints/coarse/coarse_ckpt'
 COARSE_CHECKPOINT_DIR = os.path.dirname(COARSE_CHECKPOINT_PATH)
+REFINED_CHECKPOINT_PATH = 'checkpoints/refined/refined_ckpt'
+REFINED_CHECKPOINT_DIR = os.path.dirname(REFINED_CHECKPOINT_PATH)
+
+TRAIN_REFINE = True
 
 class NyuDepthGenerator(keras.utils.Sequence) :
 

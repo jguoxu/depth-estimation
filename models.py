@@ -1,5 +1,5 @@
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense, Dropout, Activation, Flatten, Conv2D, Input, MaxPooling2D, InputLayer,UpSampling2D, Reshape,UpSampling1D
+from tensorflow.keras.layers import Dense, Dropout, Activation, Flatten, Conv2D, Input, MaxPooling2D, InputLayer,UpSampling2D, Reshape,UpSampling1D, Concat
 from tensorflow.keras.layers import BatchNormalization
 from train import IMAGE_HEIGHT, IMAGE_WIDTH
 
@@ -73,3 +73,37 @@ def model1():
     model.add(Dense(4070, activation='relu'))
     model.summary()
     return model
+
+def refineNetwork(input, first_layer_output):
+    first_layer = Sequential()
+    first_layer.add(Conv2D(filters = 63, kernel_size= (9, 9),
+                    strides=(2, 2),
+                    padding="valid",
+                    input_shape=[IMAGE_WIDTH, IMAGE_HEIGHT, 3]))
+    first_layer.add(Activation="relu")
+    first_layer.add(BatchNormalization())
+    first_layer.add(MaxPooling2D(pool_size=(2,2)))
+
+    merged_model = Concat([first_layer, coarse_results])
+    merged_model.add(Conv2D(filters = 64, kernel_size=(5, 5), padding="same"))
+    merged_model.add(BatchNormalization())
+    merged_model.add(Conv2D(filters = 1, kernel_size=(5, 5), padding="same"))
+    merged_model.add(BatchNormalization())
+    merged_model.summary()
+    return model
+
+# second_layer=Input(training_data_scaled.shape[1:])
+# conv21=Conv2D(63,(9,9),strides=(2,2),padding='valid')(first_layer)
+# b21=BatchNormalization()(conv21)
+# p21=MaxPooling2D(pool_size=(2,2))(b21)
+
+# Concat=concatenate([out1, p21])
+# # print(type(Concat),type(p21))
+# conv22=Conv2D(64,(5,5),padding='same')(Concat)
+# b22=BatchNormalization()(conv22)
+
+# out=Conv2D(1,(5,5),padding='same')(b22)
+# out=BatchNormalization()(out)
+
+# final_model= Model(inputs=first_layer,outputs=out)
+# final_model.summary()
