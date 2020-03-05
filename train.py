@@ -53,8 +53,8 @@ class NyuDepthGenerator(keras.utils.Sequence) :
             example = Image.open(pairs[0])
             label = Image.open(pairs[1])
 
-            example = example.resize((IMAGE_HEIGHT, IMAGE_WIDTH))
-            label = label.resize((TARGET_HEIGHT, TARGET_WIDTH))
+            example = example.resize((IMAGE_WIDTH, IMAGE_HEIGHT))
+            label = label.resize((TARGET_WIDTH, TARGET_HEIGHT))
 
             x_train.append(np.array(example))
             # flatten is needed because of the dense layer output is 1d
@@ -77,7 +77,7 @@ def depth_loss(y_true, y_pred):
     log_diff = K.cast(K.sum(K.square(d_arr)) / 4070.0, dtype='float32')
     penalty = K.square(K.sum(d_arr)) / K.cast(K.square(4070.0), dtype='float32')
     
-    loss = log_diff+penalty
+    loss = log_diff + penalty
 
     return loss
 
@@ -107,7 +107,7 @@ def msr_loss(y_true, y_pred):
 def model2():
     model=Sequential()
 
-    model.add(Conv2D(96,(11,11),strides=(4,4),input_shape=[IMAGE_WIDTH, IMAGE_HEIGHT, 3],padding='same'))
+    model.add(Conv2D(96,(11,11),strides=(4,4),input_shape=[IMAGE_HEIGHT, IMAGE_WIDTH, 3],padding='same'))
     model.add(BatchNormalization())
     model.add(Activation("relu"))
     model.add(MaxPooling2D(pool_size=(2,2)))
@@ -133,14 +133,19 @@ def model2():
     model.add(Flatten())
     model.add(Dense(4096))
     model.add(BatchNormalization())
-    model.add(Activation("linear"))
+    model.add(Activation("relu"))
     model.add(Dropout(0.4))
 
-    model.add(Reshape((64, 64,1)))
-
-    model.add(UpSampling2D(size=(2,2)))
-    model.add(Conv2D(1,(55,74),padding='valid'))
+    model.add(Dense(4070))
     model.add(BatchNormalization())
+    model.add(Activation("linear"))
+    model.add(Reshape((TARGET_HEIGHT, TARGET_WIDTH,1)))
+
+    # model.add(Reshape((64, 64, 1)))
+    #
+    # model.add(UpSampling2D(size=(2,2)))
+    # model.add(Conv2D(1,(55,74),padding='valid'))
+    # model.add(BatchNormalization())
     model.summary()
     return model
 
@@ -212,34 +217,25 @@ def main():
     print("model metric names: " + str(model.metrics_names))
 
     print('# Fit model on training data')
-    # when using data generate, x contains both X and Y. 
-    # batch size is define in the generator thus passing None to batch_size
-    # https://www.tensorflow.org/api_docs/python/tf/keras/Model#fit
-    #history = model.fit(x=nyu_data_generator,
-     #                   epochs=5, callbacks=[cp_callback])#(x_val, y_val))
+    history = model.fit(x=nyu_data_generator,
+                       epochs=300, callbacks=[cp_callback])
 
-    #history = model.fit_generator(nyu_data_generator, steps_per_epoch=5, epochs=1)
+    print('\nhistory dict:', history.history)
+    np.savetxt("loss_history.txt", history.history["loss"], delimiter=",")
 
-    #print('\nhistory dict:', history.history)
-
-    # Evaluate the model on the test data using `evaluate`
-    # print('\n# Evaluate on test data')
-    # results = model.evaluate(x_test, y_test, batch_size=128)
-    # print('test loss, test acc:', results)
-
-    # # Generate predictions (probabilities -- the output of the last layer)
-    # # on new data using `predict`
-    # print('\n# Generate predictions for 3 samples')
-    eval_data_generator = NyuDepthGenerator(batch_size=1)
-    result = model.evaluate_generator(generator=eval_data_generator, steps=1)
+    result = model.evaluate(x=nyu_data_generator, steps=1)
     print("test loss: ", result)
+
     if not os.path.isdir(PREDICT_FILE_PATH):
         os.mkdir(PREDICT_FILE_PATH)
-    predictions = model.predict_generator(generator=eval_data_generator, steps=2)
+    predictions = model.predict(x=nyu_data_generator, steps=1)
     print('predictions shape:', predictions.shape)
-    for i in len(predictions.shape[0]):
-        predictions[i] = (predictions[i] /  np.max(predictions[i])) * 255.0
-        image_name = os.path.join(PREDICT_FILE_PATH, '%05d_d.png' % (i))
+    for i in range(predictions.shape[0]):
+        predictions[i] = (predictions[i] / np.max(predictions[i])) * 255.0
+        print("prediction shape:" + str(predictions[i].shape))
+        # return
+        # print(predictions[i].reshape(TARGET_HEIGHT, TARGET_WIDTH))
+        image_name = os.path.join(PREDICT_FILE_PATH, '%05d_d.png' % i)
         image_im = Image.fromarray(np.uint8(predictions[i].reshape(TARGET_HEIGHT, TARGET_WIDTH)), mode="L")
         image_im.save(image_name)
     # predictions[0] = (predictions[0] / np.max(predictions[0])) * 255.0
