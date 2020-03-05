@@ -8,7 +8,7 @@ import tensorflow.keras.backend as K
 
 from tensorflow import keras
 from tensorflow.keras import layers
-from tensorflow.keras.callbacks import ModelCheckpoint
+from tensorflow.keras.callbacks import ModelCheckpoint, CSVLogger
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, Dropout, Activation, Flatten, Conv2D, Input, MaxPooling2D, InputLayer,UpSampling2D, Reshape,UpSampling1D
 from tensorflow.keras.layers import BatchNormalization
@@ -65,8 +65,6 @@ class NyuDepthGenerator(keras.utils.Sequence) :
 
 # refered from: https://github.com/jahab/Depth-estimation/blob/master/Depth_Estimation_GD.ipynb
 def depth_loss(y_true, y_pred):
-    print("y_true: " + str(y_true.shape))
-    print("y_pred: " + str(y_pred.shape))
 
     y_true = K.cast(y_true, dtype='float32')
     y_pred = K.cast(y_pred, dtype='float32')
@@ -196,6 +194,7 @@ def main():
         print("\nTraining model from scratch")
         
     nyu_data_generator = NyuDepthGenerator(batch_size=10)
+    eval_data_generator = NyuDepthGenerator(batch_size=1, csv_path='data/dev.csv')
 
     # parallel_model = multi_gpu_model(model, gpus=2)
     # parallel_model.compile(optimizer=keras.optimizers.Adam(),  # Optimizer
@@ -212,12 +211,18 @@ def main():
 
     print("model metric names: " + str(model.metrics_names))
 
+
+    csv_logger = CSVLogger('log.csv', append=False, separator=',')
     print('# Fit model on training data')
     # when using data generate, x contains both X and Y. 
     # batch size is define in the generator thus passing None to batch_size
     # https://www.tensorflow.org/api_docs/python/tf/keras/Model#fit
     history = model.fit(x=nyu_data_generator,
-                       epochs=5, callbacks=[cp_callback])
+                        validation_data=eval_data_generator,
+                        epochs=250, callbacks=[cp_callback, csv_logger])
+
+    print('\nhistory dict:', history.history)
+    # np.save("history.txt", np.array(history))
 
     # history = model.fit_generator(nyu_data_generator, steps_per_epoch=5, epochs=1)
 
@@ -235,7 +240,7 @@ def main():
     if not os.path.isdir(PREDICT_FILE_PATH):
         os.mkdir(PREDICT_FILE_PATH)
     predictions = model.predict_generator(generator=eval_data_generator, steps=20)
-    
+
     print('predictions shape:', predictions.shape)
     for i in range(predictions.shape[0]):
         predictions[i] = (predictions[i] /  np.max(predictions[i])) * 255.0
