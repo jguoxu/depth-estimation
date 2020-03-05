@@ -22,11 +22,9 @@ TARGET_HEIGHT = 55
 TARGET_WIDTH = 74
 
 COARSE_CHECKPOINT_PATH = 'checkpoints/coarse/coarse_ckpt'
-COARSE_CHECKPOINT_DIR = os.path.dirname(COARSE_CHECKPOINT_PATH)
 REFINED_CHECKPOINT_PATH = 'checkpoints/refined/refined_ckpt'
-REFINED_CHECKPOINT_DIR = os.path.dirname(REFINED_CHECKPOINT_PATH)
 
-TRAIN_REFINE = True
+is_refine_training = True
 
 class NyuDepthGenerator(keras.utils.Sequence) :
 
@@ -107,18 +105,28 @@ def msr_loss(y_true, y_pred):
 def main():
     print(tf.__version__)
 
-    # Create a callback that saves the model's weights with every epoch (save_freq=1)
+    # Pick a model (coarse or refined)
+    if (is_refine_training):
+        current_filepath = REFINED_CHECKPOINT_PATH,
+        coarse_training_results = models.model2()
+        model = models.refinedNetworkModel(coarse_training_results)
+    else:
+        current_filepath = COARSE_CHECKPOINT_PATH
+        model = models.model2()
 
-    cp_callback = tf.keras.callbacks.ModelCheckpoint(filepath=COARSE_CHECKPOINT_PATH,
-                                                 save_weights_only=True,
-                                                 verbose=1,
-                                                 save_freq='epoch')
-    model = models.model2()
+    # Create a callback that saves the model's weights with every epoch
+    cp_callback = tf.keras.callbacks.ModelCheckpoint(filepath=current_filepath, save_weights_only=True,verbose=1, save_freq='epoch')
 
-    latest_checkpoint = tf.train.latest_checkpoint(COARSE_CHECKPOINT_DIR)
+    latest_checkpoint = tf.train.latest_checkpoint(os.path.dirname(current_filepath))
 
-    if latest_checkpoint:
-        print("\nRestored model from checkpoint")
+    # If training refined for the first time, no checkpoint will be found in refined dir.
+    # Restore from coarse directory.
+    if is_refined_training and not latest_checkpoint:
+        latest_checkpoint = tf.train.latest_checkpoint(os.path.dirname(COARSE_CHECKPOINT_PATH))
+        print("\nGetting coarse checkpoint for refined training")
+        model.load_weights(latest_checkpoint)
+    elif (latest_checkpoint): 
+        print("\nRestoring form checkpoint")
         model.load_weights(latest_checkpoint)
     else: 
         print("\nTraining model from scratch")
