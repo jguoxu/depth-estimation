@@ -53,8 +53,8 @@ class NyuDepthGenerator(keras.utils.Sequence) :
             example = Image.open(pairs[0])
             label = Image.open(pairs[1])
 
-            example = example.resize((IMAGE_HEIGHT, IMAGE_WIDTH))
-            label = label.resize((TARGET_HEIGHT, TARGET_WIDTH))
+            example = example.resize((IMAGE_WIDTH, IMAGE_HEIGHT))
+            label = label.resize((TARGET_WIDTH, TARGET_HEIGHT))
 
             x_train.append(np.array(example))
             # flatten is needed because of the dense layer output is 1d
@@ -110,7 +110,7 @@ def msr_loss(y_true, y_pred):
 def model2():
     model=Sequential()
 
-    model.add(Conv2D(96,(11,11),strides=(4,4),input_shape=[IMAGE_HEIGHT, IMAGE_WIDTH, 3],padding='same'))
+    model.add(Conv2D(96,(11,11),strides=(4,4), input_shape=[IMAGE_HEIGHT, IMAGE_WIDTH, 3],padding='same'))
     model.add(BatchNormalization())
     model.add(Activation("relu"))
     model.add(MaxPooling2D(pool_size=(2,2)))
@@ -141,7 +141,7 @@ def model2():
 
     model.add(Dense(4070, activation='relu'))
     model.add(BatchNormalization())
-    model.add(Reshape((TARGET_WIDTH, TARGET_HEIGHT)))
+    model.add(Reshape((TARGET_HEIGHT, TARGET_WIDTH)))
     model.summary()
     return model
 
@@ -216,8 +216,8 @@ def main():
     # when using data generate, x contains both X and Y. 
     # batch size is define in the generator thus passing None to batch_size
     # https://www.tensorflow.org/api_docs/python/tf/keras/Model#fit
-    # history = model.fit(x=nyu_data_generator,
-    #                    epochs=5, callbacks=[cp_callback])
+    history = model.fit(x=nyu_data_generator,
+                       epochs=5, callbacks=[cp_callback])
 
     # history = model.fit_generator(nyu_data_generator, steps_per_epoch=5, epochs=1)
 
@@ -230,17 +230,20 @@ def main():
 
     print('\n# Generate predictions for 3 samples')
     eval_data_generator = NyuDepthGenerator(batch_size=1)
-    result = model.evaluate_generator(generator=eval_data_generator, steps=1)
+    result = model.evaluate_generator(generator=eval_data_generator, steps=20)
     print("test loss: ", result)
     if not os.path.isdir(PREDICT_FILE_PATH):
         os.mkdir(PREDICT_FILE_PATH)
-    predictions = model.predict_generator(generator=eval_data_generator, steps=2)
+    predictions = model.predict_generator(generator=eval_data_generator, steps=20)
     
     print('predictions shape:', predictions.shape)
     for i in range(predictions.shape[0]):
         predictions[i] = (predictions[i] /  np.max(predictions[i])) * 255.0
+
+        # predictions[i] = np.transpose(predictions[i], (1,0))
         image_name = os.path.join(PREDICT_FILE_PATH, '%05d_d.png' % (i))
-        image_im = Image.fromarray(np.uint8(predictions[i].reshape(TARGET_WIDTH, TARGET_HEIGHT)), mode="L")
+        image_im = Image.fromarray(np.uint8(predictions[i]), mode="P")
+        # image_im = Image.fromarray(np.uint8(predictions[i].reshape(TARGET_HEIGHT, TARGET_WIDTH)), mode="L")
         image_im.save(image_name)
 
 
