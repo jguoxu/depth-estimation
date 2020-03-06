@@ -43,6 +43,40 @@ def model2():
     model.summary()
     return model
 
+def model2Functional():
+    first_layer=Input(shape=(IMAGE_WIDTH, IMAGE_HEIGHT, 3))
+    conv1 = Conv2D(96,(11,11),strides=(4,4),activation="relu",padding="same")(first_layer)
+    batch1 = BatchNormalization()(conv1)
+    pool1 = MaxPooling2D(pool_size=(2,2))(batch1)
+    
+    conv2 = Conv2D(256, (5, 5), activation="relu", padding="same")(pool1))
+    batch2 = BatchNormalization()(conv2)
+    pool2 = MaxPooling2D(pool_size=(2,2))(batch2)
+
+    conv3 = Conv2D(384, (3, 3), activation="relu", padding="same")(pool2)
+    batch3 = BatchNormalization()(conv3)
+
+    conv4 = Conv2D(384, (3, 3), activation="relu", padding="same")(batch3)
+    batch4 = BatchNormalization()(batch4)
+
+    dense5 = Dense(256, activation="relu")(batch4)
+    batch5 = BatchNormalization()(dense5)
+    pool5 = MaxPooling2D(pool_size=(2, 2))(batch5)
+
+    flatten = Flatten()(pool5)
+    flatten = Dense(4096, activation="linear")(flatten)
+    flatten = BatchNormalization()(flatten)
+    flatten = Dropout(0.4)(flatten) 
+
+    reshaped=Reshape((64,64,1))(flatten)
+    upsampled=UpSampling2D(size=(2,2))(reshaped)
+
+    out1 = Conv2D(1, (55, 74), padding="valid")(upsampled)
+    out1 = BatchNormalization()(out1)
+    model = Model(inputs=first_layer, outputs=out1)
+    model.summary
+    return model
+
 def model1():
     model = Sequential()
 
@@ -91,15 +125,17 @@ def refinedNetworkModel(coarse_training_results):
     coarse_layer = coarse_input
     for layer in coarse_training_results.layers:
         coarse_layer = layer(coarse_layer)
+     
+    functional_coarse_model = Model([coarse_layer, coarse_layer])
 
-    merged = concatenate([coarse_layer, pool1]) 
+    merged = concatenate([functional_coarse_model, pool1]) 
     conv2 = Conv2D(filters = 64, kernel_size=(5, 5), padding="same")(merged)
     batch2 = BatchNormalization()(conv2)
 
     out = Conv2D(filters = 1, kernel_size=(5, 5), padding="same")(batch2)
     out = BatchNormalization()(out)
 
-    model = Model(inputs=[layer1, coarse_layer], outputs=out)
+    model = Model(inputs=[layer1, functional_coarse_model], outputs=out)
     model.summary()
     return model
 
