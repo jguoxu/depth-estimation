@@ -44,12 +44,12 @@ def model2():
     return model
 
 def model2Functional():
-    first_layer=Input(shape=(IMAGE_WIDTH, IMAGE_HEIGHT, 3))
+    first_layer=Input(shape=(IMAGE_HEIGHT, IMAGE_WIDTH, 3))
     conv1 = Conv2D(96,(11,11),strides=(4,4),activation="relu",padding="same")(first_layer)
     batch1 = BatchNormalization()(conv1)
     pool1 = MaxPooling2D(pool_size=(2,2))(batch1)
     
-    conv2 = Conv2D(256, (5, 5), activation="relu", padding="same")(pool1))
+    conv2 = Conv2D(256, (5, 5), activation="relu", padding="same")(pool1)
     batch2 = BatchNormalization()(conv2)
     pool2 = MaxPooling2D(pool_size=(2,2))(batch2)
 
@@ -57,7 +57,7 @@ def model2Functional():
     batch3 = BatchNormalization()(conv3)
 
     conv4 = Conv2D(384, (3, 3), activation="relu", padding="same")(batch3)
-    batch4 = BatchNormalization()(batch4)
+    batch4 = BatchNormalization()(batch3)
 
     dense5 = Dense(256, activation="relu")(batch4)
     batch5 = BatchNormalization()(dense5)
@@ -71,11 +71,11 @@ def model2Functional():
     reshaped=Reshape((64,64,1))(flatten)
     upsampled=UpSampling2D(size=(2,2))(reshaped)
 
-    out1 = Conv2D(1, (55, 74), padding="valid")(upsampled)
+    out1 = Conv2D(1, (74, 55), padding="valid")(upsampled)
     out1 = BatchNormalization()(out1)
     model = Model(inputs=first_layer, outputs=out1)
     model.summary
-    return model
+    return model, first_layer, out1
 
 def model1():
     model = Sequential()
@@ -108,36 +108,25 @@ def model1():
     model.summary()
     return model
 
-def refinedNetworkModel(coarse_training_results):
-    layer1 = Input(shape=(IMAGE_WIDTH, IMAGE_HEIGHT, 3)) 
+def refinedNetworkModel():
+    coarse_model, layer1, coarse_training_results = model2Functional()
 
     conv1 = (Conv2D(filters = 63, kernel_size= (9, 9),
                     strides=(2, 2),
-                    padding="valid",
-                    input_shape=[IMAGE_WIDTH, IMAGE_HEIGHT, 3]))(layer1)
+                    padding="valid"))(layer1)
     batch1 = BatchNormalization()(conv1)
     pool1 = MaxPooling2D(pool_size=(2,2))(batch1)
 
-    #convert sequential model to functional so that we can concatenate
-    coarse_input = Input(shape=(IMAGE_WIDTH, IMAGE_HEIGHT, 3))
-    # verify how to convert input 
-    # https://stackoverflow.com/questions/50837715/conversion-of-a-sequential-model-to-a-functional-model-with-keras-2-2-0/50937113#50937113
-    coarse_layer = coarse_input
-    for layer in coarse_training_results.layers:
-        coarse_layer = layer(coarse_layer)
-     
-    functional_coarse_model = Model([coarse_layer, coarse_layer])
-
-    merged = concatenate([functional_coarse_model, pool1]) 
+    merged = concatenate([coarse_training_results, pool1]) 
     conv2 = Conv2D(filters = 64, kernel_size=(5, 5), padding="same")(merged)
     batch2 = BatchNormalization()(conv2)
 
     out = Conv2D(filters = 1, kernel_size=(5, 5), padding="same")(batch2)
     out = BatchNormalization()(out)
 
-    model = Model(inputs=[layer1, functional_coarse_model], outputs=out)
-    model.summary()
-    return model
+    refined_model = Model(inputs=layer1, outputs=out)
+    refined_model.summary()
+    return coarse_model, refined_model
 
 # def refinedNetworkModelSequential(coarse_training_results):
 #     first_layer = Sequential()
