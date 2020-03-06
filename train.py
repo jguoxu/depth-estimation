@@ -73,6 +73,10 @@ def depth_loss(y_true, y_pred):
     lnYTrue = tf.where(tf.math.is_inf(y_true), tf.ones_like(y_true), y_true)
     lnYPred = tf.where(tf.math.is_inf(y_pred), tf.ones_like(y_pred), y_pred)
 
+    invalid_depths = tf.where(y_true < 0, 0.0, 1.0)
+    lnYTrue = tf.multiply(lnYTrue, invalid_depths)
+    lnYPred = tf.multiply(lnYPred, invalid_depths)
+
     d_arr = K.cast(lnYTrue - lnYPred, dtype='float32')
 
     log_diff = K.cast(K.sum(K.square(d_arr)) / 4070.0, dtype='float32')
@@ -110,8 +114,8 @@ def main():
             print("\nRestored coarse model from checkpoint")
             coarse_model.load_weights(latest_checkpoint_coarse)
         else:
-            print("\nCoarse model not restored. Please run coarse model first")
-            return
+            print("\nCoarse model not restored. Please exit and run coarse model first")
+            print("\nStarting one pass training")
     else:
         coarse_model, _, _ = models.coarse_network_model()
         model = coarse_model
