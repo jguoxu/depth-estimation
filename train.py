@@ -23,6 +23,11 @@ TARGET_WIDTH = 74
 
 COARSE_CHECKPOINT_PATH = 'checkpoints/coarse/coarse_ckpt'
 COARSE_CHECKPOINT_DIR = os.path.dirname(COARSE_CHECKPOINT_PATH)
+REFINED_CHECKPOINT_PATH = 'checkpoints/refined/refined_ckpt'
+REFINED_CHECKPOINT_DIR = os.path.dirname(REFINED_CHECKPOINT_PATH)
+PREDICT_FILE_PATH = 'data/predict'
+
+RUN_REFINE = True
 
 class NyuDepthGenerator(keras.utils.Sequence) :
 
@@ -49,8 +54,8 @@ class NyuDepthGenerator(keras.utils.Sequence) :
             example = Image.open(pairs[0])
             label = Image.open(pairs[1])
 
-            example = example.resize((IMAGE_HEIGHT, IMAGE_WIDTH))
-            label = label.resize((TARGET_HEIGHT, TARGET_WIDTH))
+            example = example.resize((IMAGE_WIDTH, IMAGE_HEIGHT))
+            label = label.resize((TARGET_WIDTH, TARGET_HEIGHT))
 
             x_train.append(np.array(example))
             # flatten is needed because of the dense layer output is 1d
@@ -99,64 +104,69 @@ def msr_loss(y_true, y_pred):
 
     return loss
 
-
 def main():
     print(tf.__version__)
 
-    # Create a callback that saves the model's weights with every epoch (save_freq=1)
+    cp_callback_coarse = tf.keras.callbacks.ModelCheckpoint(filepath=COARSE_CHECKPOINT_PATH,
+                                                     save_weights_only=True,
+                                                     verbose=1)
+    cp_callback_refine = tf.keras.callbacks.ModelCheckpoint(filepath=REFINED_CHECKPOINT_PATH,
+                                                            save_weights_only=True,
+                                                            verbose=1)
 
-    cp_callback = tf.keras.callbacks.ModelCheckpoint(filepath=COARSE_CHECKPOINT_PATH,
-                                                 save_weights_only=True,
-                                                 verbose=1,
-                                                 save_freq='epoch')
-    model = models.model2()
+    latest_checkpoint_refine = tf.train.latest_checkpoint(REFINED_CHECKPOINT_DIR)
+    latest_checkpoint_coarse = tf.train.latest_checkpoint(COARSE_CHECKPOINT_DIR)
+    if RUN_REFINE:
+        refine_model, coarse_model = models.refined_network_model()
+        model = refine_model
+        if latest_checkpoint_refine:
+            print("\nRestored refine model from checkpoint")
+            refine_model.load_weights(latest_checkpoint_refine)
+        elif latest_checkpoint_coarse:
+            print("\nRestored coarse model from checkpoint")
+            coarse_model.load_weights(latest_checkpoint_coarse)
+        else:
+            print("\nCoarse model not restored. Please run coarse model first")
+            return
+    else:
+        coarse_model, _, _ = models.coarse_network_model()
+        model = coarse_model
+        if latest_checkpoint_coarse:
+            print("\nRestored coarse model from checkpoint")
+            coarse_model.load_weights(latest_checkpoint_coarse)
+        else:
+            print("\nNo coarse checkpoint saved")
 
-    latest_checkpoint = tf.train.latest_checkpoint(COARSE_CHECKPOINT_DIR)
-
-    if latest_checkpoint:
-        print("\nRestored model from checkpoint")
-        model.load_weights(latest_checkpoint)
-    else: 
-        print("\nTraining model from scratch")
-        
     nyu_data_generator = NyuDepthGenerator(batch_size=10)
 
-    # parallel_model = multi_gpu_model(model, gpus=2)
-    # parallel_model.compile(optimizer=keras.optimizers.Adam(),  # Optimizer
-    #           # Loss function to minimize
-    #           loss=msr_loss,
-    #           # List of metrics to monitor
-    #           metrics=None)
-
     model.compile(optimizer=keras.optimizers.Adam(),  # Optimizer
-              # Loss function to minimize
-              loss=depth_loss,
-              # List of metrics to monitor
-              metrics=None)
-
-    print("model metric names: " + str(model.metrics_names))
+                  # Loss function to minimize
+                  loss=depth_loss,
+                  # List of metrics to monitor
+                  metrics=None)
 
     print('# Fit model on training data')
-    # when using data generate, x contains both X and Y. 
-    # batch size is define in the generator thus passing None to batch_size
-    # https://www.tensorflow.org/api_docs/python/tf/keras/Model#fit
-    history = model.fit(x=nyu_data_generator,
-                        epochs=10, callbacks=[cp_callback])#(x_val, y_val))
-
-    # history = model.fit_generator(nyu_data_generator, steps_per_epoch=5, epochs=1)
-
+    if RUN_REFINE:
+        history = model.fit(x=nyu_data_generator,
+                            epochs=300, callbacks=[cp_callback_refine])
+    else:
+        history = model.fit(x=nyu_data_generator,
+                            epochs=300, callbacks=[cp_callback_coarse])
     print('\nhistory dict:', history.history)
+    np.savetxt("loss_history.txt", history.history["loss"], delimiter=",")
 
-    # Evaluate the model on the test data using `evaluate`
-    # print('\n# Evaluate on test data')
-    # results = model.evaluate(x_test, y_test, batch_size=128)
-    # print('test loss, test acc:', results)
+    result = model.evaluate(x=nyu_data_generator, steps=1)
+    print("test loss: ", result)
 
-    # # Generate predictions (probabilities -- the output of the last layer)
-    # # on new data using `predict`
-    # print('\n# Generate predictions for 3 samples')
-    # predictions = model.predict(x_test[:3])
-    # print('predictions shape:', predictions.shape)
+    if not os.path.isdir(PREDICT_FILE_PATH):
+        os.mkdir(PREDICT_FILE_PATH)
+    predictions = model.predict(x=nyu_data_generator, steps=1)
+    print('predictions shape:', predictions.shape)
+    for i in range(predictions.shape[0]):
+        predictions[i] = (predictions[i] / np.max(predictions[i])) * 255.0
+        image_name = os.path.join(PREDICT_FILE_PATH, '%05d_d.png' % i)
+        image_im = Image.fromarray(np.uint8(predictions[i].reshape(TARGET_HEIGHT, TARGET_WIDTH)), mode="L")
+        image_im.save(image_name)
 
 
 def debug_display_rgbd_pair(rgb, d):
@@ -171,8 +181,3 @@ def debug_display_rgbd_pair(rgb, d):
 
 if __name__ == '__main__':
     main()
-    # x_train, y_train = csv_inputs()
-    # print("x_train shape: " + str(x_train.shape))
-    # print("y_train shape: " + str(y_train.shape))
-
-    # debug_display_rgbd_pair(x_train[0], y_train[0])
