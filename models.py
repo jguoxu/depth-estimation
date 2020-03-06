@@ -2,11 +2,12 @@ from tensorflow.keras.models import Sequential, Model
 from tensorflow.keras.layers import Dense, Dropout, Activation, Flatten, Conv2D, Input, MaxPooling2D, InputLayer,UpSampling2D, Reshape,UpSampling1D
 from tensorflow.keras.layers import BatchNormalization, concatenate
 from train import IMAGE_HEIGHT, IMAGE_WIDTH
+from train import TARGET_WIDTH, TARGET_HEIGHT
 
 def model2():
     model=Sequential()
 
-    model.add(Conv2D(96,(11,11),strides=(4,4),input_shape=[IMAGE_WIDTH, IMAGE_HEIGHT, 3],padding='same'))
+    model.add(Conv2D(96,(11,11),strides=(4,4),input_shape=[IMAGE_HEIGHT, IMAGE_WIDTH, 3],padding='same'))
     model.add(BatchNormalization())
     model.add(Activation("relu"))
     model.add(MaxPooling2D(pool_size=(2,2)))
@@ -42,6 +43,76 @@ def model2():
     model.add(BatchNormalization())
     model.summary()
     return model
+
+def coarse_model_def():
+    first_layer = Input(shape=(IMAGE_HEIGHT, IMAGE_WIDTH, 3))
+    conv1 = Conv2D(96, (11, 11), strides=(4, 4), activation='relu', padding='same')(first_layer)
+    b1 = BatchNormalization()(conv1)
+    p1 = MaxPooling2D(pool_size=(2, 2))(b1)
+
+    conv2 = Conv2D(256, (5, 5), activation='relu', padding='same')(p1)
+    b2 = BatchNormalization()(conv2)
+    p2 = MaxPooling2D(pool_size=(2, 2))(b2)
+
+    conv3 = Conv2D(384, (3, 3), activation='relu', padding='same')(p2)
+    b3 = BatchNormalization()(conv3)
+
+    conv4 = Conv2D(384, (3, 3), activation='relu', padding='same')(b3)
+    b4 = BatchNormalization()(conv4)
+
+    Dlayer1 = Dense(256, activation='relu')(b4)
+    b5 = BatchNormalization()(Dlayer1)
+    p5 = MaxPooling2D(pool_size=(2, 2))(b5)
+
+    flat = Flatten()(p5)
+    flat = Dense(4096, activation='relu')(flat)
+    flat = BatchNormalization()(flat)
+    flat = Dropout(0.4)(flat)
+
+    flat = Dense(4070, activation='linear')(flat)
+    flat = BatchNormalization()(flat)
+    coarse_output = Reshape((TARGET_HEIGHT, TARGET_WIDTH, 1))(flat)
+
+    # mat = Reshape((64, 64, 1))(flat)
+    #
+    # upsamp = UpSampling2D((2, 2))(mat)
+    #
+    # out1 = Conv2D(1, (74, 55))(upsamp)
+    # out1 = BatchNormalization()(out1)
+    # # model.add(Flatten())
+    # # model.add(Dense(4096))
+    # # model.add(BatchNormalization())
+    # # model.add(Activation("linear"))
+    # # model.add(Dropout(0.4))
+    #
+    # # model.add(Reshape((64, 64,1)))
+    #
+    # # model.add(UpSampling2D(size=(2,2)))
+    # # model.add(Conv2D(1,(74,55),padding='valid'))
+
+
+    coarse_model = Model(inputs=first_layer, outputs=coarse_output)
+    coarse_model.summary()
+    return coarse_model, coarse_output, first_layer
+
+def refine_model_def():
+    second_layer = Input(shape=(IMAGE_HEIGHT, IMAGE_WIDTH, 3))
+    coarse_model, coarse_output, first_layer = coarse_model_def()
+    conv21 = Conv2D(63, (9, 9), strides=(2, 2), padding='valid')(first_layer)
+    b21 = BatchNormalization()(conv21)
+    p21 = MaxPooling2D(pool_size=(2, 2))(b21)
+
+    Concat = concatenate([coarse_output, p21])
+    # print(type(Concat),type(p21))
+    conv22 = Conv2D(64, (5, 5), padding='same')(Concat)
+    b22 = BatchNormalization()(conv22)
+
+    out = Conv2D(1, (5, 5), padding='same')(b22)
+    out = BatchNormalization()(out)
+
+    refine_model = Model(inputs=first_layer, outputs=out)
+    refine_model.summary()
+    return refine_model, coarse_model
 
 def model1():
     model = Sequential()
