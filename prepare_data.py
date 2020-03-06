@@ -64,7 +64,7 @@ def convert_nyu(path):
             image_im = Image.fromarray(np.uint8(image))
             image_im.save(image_name)
 
-        if not os.path.isfile(image_name):
+        if not os.path.isfile(depth_name):
             depth_im = Image.fromarray(np.uint8(depth))
             depth_im.save(depth_name)
 
