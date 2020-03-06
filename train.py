@@ -140,13 +140,13 @@ def main():
     print('\nHistory dict:', history.history)
 
 
-    result = model.evaluate(x=eval_data_generator, steps=144)
+    result = model.evaluate(x=eval_data_generator)
     print("Final eval loss: ", result)
 
     if not os.path.isdir(PREDICT_FILE_PATH):
         os.mkdir(PREDICT_FILE_PATH)
 
-    predictions = model.predict(x=eval_data_generator, steps=144)
+    predictions = model.predict(x=eval_data_generator)
     print("Prediction dim: " + str(predictions.shape))
 
     for i in range(predictions.shape[0]):
