@@ -9,7 +9,7 @@ import tensorflow.keras.backend as K
 
 from tensorflow import keras
 from tensorflow.keras import layers
-from tensorflow.keras.callbacks import ModelCheckpoint
+from tensorflow.keras.callbacks import ModelCheckpoint, CSVLogger
 from tensorflow.keras.utils import multi_gpu_model
 
 # from scipy import imageio
@@ -29,7 +29,7 @@ PREDICT_FILE_PATH = 'data/predict'
 
 RUN_REFINE = True
 
-class NyuDepthGenerator(keras.utils.Sequence) :
+class NyuDepthGenerator(keras.utils.Sequence):
 
     def __init__(self, batch_size, csv_path='data/train.csv') :
         tf.keras.backend.clear_session() #Reset notebook state
@@ -83,27 +83,6 @@ def depth_loss(y_true, y_pred):
     return loss
 
 
-
-def msr_loss(y_true, y_pred):
-    print(y_true)
-
-    flatten_true = K.flatten(y_true)
-    flatten_pred = K.flatten(y_pred)
-    loss=K.mean(K.sum(K.square(flatten_true-flatten_pred)))
-
-    print ("y_true:")
-    K.print_tensor(y_true)
-
-    # print ("predict:")
-    # K.print_tensor(y_pred)
-
-    # d = K.log(y_true) - K.log(y_pred)
-    # log_diff = K.sum(K.square(d)) / 4070.0 # 4070 is number of pixels (74, 55)
-    # penalty = K.square(K.sum(d)) / K.square(4070.0)
-    # loss = log_diff - penalty
-
-    return loss
-
 def main():
     print(tf.__version__)
 
@@ -113,6 +92,11 @@ def main():
     cp_callback_refine = tf.keras.callbacks.ModelCheckpoint(filepath=REFINED_CHECKPOINT_PATH,
                                                             save_weights_only=True,
                                                             verbose=1)
+
+    csv_logger = CSVLogger('log.csv', append=False, separator=',')
+
+    nyu_data_generator = NyuDepthGenerator(batch_size=10, csv_path='data/train.csv')
+    eval_data_generator = NyuDepthGenerator(batch_size=1, csv_path='data/dev.csv')
 
     latest_checkpoint_refine = tf.train.latest_checkpoint(REFINED_CHECKPOINT_DIR)
     latest_checkpoint_coarse = tf.train.latest_checkpoint(COARSE_CHECKPOINT_DIR)
@@ -137,46 +121,39 @@ def main():
         else:
             print("\nNo coarse checkpoint saved")
 
-    nyu_data_generator = NyuDepthGenerator(batch_size=10)
-
     model.compile(optimizer=keras.optimizers.Adam(),  # Optimizer
                   # Loss function to minimize
                   loss=depth_loss,
                   # List of metrics to monitor
                   metrics=None)
 
-    print('# Fit model on training data')
+    print('Fit model on training data')
     if RUN_REFINE:
         history = model.fit(x=nyu_data_generator,
-                            epochs=300, callbacks=[cp_callback_refine])
+                            validation_data=eval_data_generator,
+                            epochs=175, callbacks=[cp_callback_refine, csv_logger])
     else:
         history = model.fit(x=nyu_data_generator,
-                            epochs=300, callbacks=[cp_callback_coarse])
-    print('\nhistory dict:', history.history)
-    np.savetxt("loss_history.txt", history.history["loss"], delimiter=",")
+                            validation_data=eval_data_generator,
+                            epochs=175, callbacks=[cp_callback_coarse, csv_logger])
 
-    result = model.evaluate(x=nyu_data_generator, steps=1)
-    print("test loss: ", result)
+    print('\nHistory dict:', history.history)
+
+
+    result = model.evaluate(x=eval_data_generator, steps=144)
+    print("Final eval loss: ", result)
 
     if not os.path.isdir(PREDICT_FILE_PATH):
         os.mkdir(PREDICT_FILE_PATH)
-    predictions = model.predict(x=nyu_data_generator, steps=1)
-    print('predictions shape:', predictions.shape)
+
+    predictions = model.predict(x=eval_data_generator, steps=144)
+    print("Prediction dim: " + str(predictions.shape))
+
     for i in range(predictions.shape[0]):
         predictions[i] = (predictions[i] / np.max(predictions[i])) * 255.0
         image_name = os.path.join(PREDICT_FILE_PATH, '%05d_d.png' % i)
         image_im = Image.fromarray(np.uint8(predictions[i].reshape(TARGET_HEIGHT, TARGET_WIDTH)), mode="L")
         image_im.save(image_name)
-
-
-def debug_display_rgbd_pair(rgb, d):
-    img = Image.fromarray(rgb, 'RGB')
-    img.show()
-
-    # mode 'P' is 8bit pixel:
-    # https://pillow.readthedocs.io/en/4.2.x/handbook/concepts.html#concept-modes
-    img = Image.fromarray(d, 'P')
-    img.show()
 
 
 if __name__ == '__main__':

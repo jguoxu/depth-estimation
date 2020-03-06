@@ -17,7 +17,7 @@ def coarse_network_model():
     batch3 = BatchNormalization()(conv3)
 
     conv4 = Conv2D(384, (3, 3), activation="relu", padding="same")(batch3)
-    batch4 = BatchNormalization()(batch3)
+    batch4 = BatchNormalization()(conv4)
 
     dense5 = Dense(256, activation="relu")(batch4)
     batch5 = BatchNormalization()(dense5)
