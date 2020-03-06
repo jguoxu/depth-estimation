@@ -27,19 +27,11 @@ def plot_csv(path):
             loss.append(float(row[1]))
             val_loss.append(float(row[2]))
 
-
-    print(loss)
-    print(t)
-    # return
-    # axs.set_ylim(20, 0)
-    # lst_iter = range(100)
-    # lst_loss = [0.01 * i - 0.01 * i ** 2 for i in range(100)]
-    # print(lst_loss)
     plt.plot(t, loss,  '-b', label='loss')
     plt.plot(t, val_loss,  '-r', label='val loss')
     plt.xlabel("n iteration")
-    plt.ylim(top=0.8)
-    plt.ylim(bottom=0.49)
+    plt.ylim(top=1)
+    plt.ylim(bottom=0)
     plt.legend(loc='upper left')
     plt.title("Loss")
 
