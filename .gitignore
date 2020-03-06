@@ -1,2 +1,5 @@
-data/
+data/train
+data/predict
+*.mat
 checkpoints/
+.DS_Store

@@ -9,6 +9,7 @@ NYU_FILE_URL = 'http://horatio.cs.nyu.edu/mit/silberman/nyu_depth_v2/nyu_depth_v
 NYU_FILE_PATH = 'data/nyu_depth_v2_labeled.mat'
 TRAIN_FILE_PATH = 'data/train'
 MAX_DEPTH_METER = 6.0
+DEV_PERCENT = 0.1 # split 10% data to dev examples
 
 def convert_nyu(path):
     if not os.path.isfile(path):
@@ -40,11 +41,13 @@ def convert_nyu(path):
 
     # training example contain a list of rgb depth pairs.
     train_examples = []
+    dev_examples = []
 
     if not os.path.isdir(TRAIN_FILE_PATH):
         os.mkdir(TRAIN_FILE_PATH)
 
     file_count = h5file['images'].shape[0]
+    train_file_count = file_count * (1.0 - DEV_PERCENT)
     for i in range(file_count):
         image = np.transpose(h5file['images'][i], (2, 1, 0))
         depth = np.transpose(h5file['depths'][i], (1, 0))
@@ -55,20 +58,31 @@ def convert_nyu(path):
 
         image_name = os.path.join(TRAIN_FILE_PATH, '%05d_c.png' % (i))
         depth_name = os.path.join(TRAIN_FILE_PATH, '%05d_d.png' % (i))
-        train_examples.append((image_name, depth_name))
 
         # save to local png file.
-        image_im = Image.fromarray(np.uint8(image))
-        image_im.save(image_name)
+        if not os.path.isfile(image_name):
+            image_im = Image.fromarray(np.uint8(image))
+            image_im.save(image_name)
 
-        depth_im = Image.fromarray(np.uint8(depth))
-        depth_im.save(depth_name)
+        if not os.path.isfile(image_name):
+            depth_im = Image.fromarray(np.uint8(depth))
+            depth_im.save(depth_name)
 
-        print('Saved file: %i out of %d' % (i, file_count))
+        if i < train_file_count:
+            train_examples.append((image_name, depth_name))
+        else:
+            dev_examples.append((image_name, depth_name))
+
+        print('Processed file: %i out of %d' % (i, file_count))
 
     # write train_examples to csv
     with open('data/train.csv', 'w') as output:
         for (image_name, depth_name) in train_examples:
+            output.write("%s,%s" % (image_name, depth_name))
+            output.write("\n")
+
+    with open('data/dev.csv', 'w') as output:
+        for (image_name, depth_name) in dev_examples:
             output.write("%s,%s" % (image_name, depth_name))
             output.write("\n")
 
