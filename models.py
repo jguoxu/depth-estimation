@@ -35,10 +35,10 @@ def coarse_network_model():
     out1 = BatchNormalization()(out1)
     model = Model(inputs=first_layer, outputs=out1)
     model.summary
-    return model, first_layer, out1
+    return model, out1, first_layer
 
 def refined_network_model():
-    coarse_model, layer1, coarse_training_results = coarse_network_model()
+    coarse_model, coarse_training_results, layer1 = coarse_network_model()
 
     conv1 = (Conv2D(filters = 63, kernel_size= (9, 9),
                     strides=(2, 2),
@@ -55,4 +55,4 @@ def refined_network_model():
 
     refined_model = Model(inputs=layer1, outputs=out)
     refined_model.summary()
-    return coarse_model, refined_model
+    return refined_model, coarse_model
