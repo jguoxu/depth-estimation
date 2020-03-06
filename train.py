@@ -104,75 +104,6 @@ def msr_loss(y_true, y_pred):
 
     return loss
 
-
-# def main():
-#     print(tf.__version__)
-#
-#     # Pick a model (coarse or refined)
-#     if (is_refine_training):
-#         current_filepath = REFINED_CHECKPOINT_PATH,
-#         coarse_training_results = models.model2()
-#         model = models.refinedNetworkModel(coarse_training_results)
-#     else:
-#         current_filepath = COARSE_CHECKPOINT_PATH
-#         model = models.model2()
-#
-#     # Create a callback that saves the model's weights with every epoch
-#     cp_callback = tf.keras.callbacks.ModelCheckpoint(filepath=current_filepath, save_weights_only=True,verbose=1, save_freq='epoch')
-#
-#     latest_checkpoint = tf.train.latest_checkpoint(os.path.dirname(current_filepath))
-#
-#     # If training refined for the first time, no checkpoint will be found in refined dir.
-#     # Restore from coarse directory.
-#     if is_refined_training and not latest_checkpoint:
-#         latest_checkpoint = tf.train.latest_checkpoint(os.path.dirname(COARSE_CHECKPOINT_PATH))
-#         print("\nGetting coarse checkpoint for refined training")
-#         model.load_weights(latest_checkpoint)
-#     elif (latest_checkpoint):
-#         print("\nRestoring form checkpoint")
-#         model.load_weights(latest_checkpoint)
-#     else:
-#         print("\nTraining model from scratch")
-#
-#     nyu_data_generator = NyuDepthGenerator(batch_size=10)
-#
-#     # parallel_model = multi_gpu_model(model, gpus=2)
-#     # parallel_model.compile(optimizer=keras.optimizers.Adam(),  # Optimizer
-#     #           # Loss function to minimize
-#     #           loss=msr_loss,
-#     #           # List of metrics to monitor
-#     #           metrics=None)
-#
-#     model.compile(optimizer=keras.optimizers.Adam(),  # Optimizer
-#               # Loss function to minimize
-#               loss=depth_loss,
-#               # List of metrics to monitor
-#               metrics=None)
-#
-#     print("model metric names: " + str(model.metrics_names))
-#
-#     print('# Fit model on training data')
-#     # when using data generate, x contains both X and Y.
-#     # batch size is define in the generator thus passing None to batch_size
-#     # https://www.tensorflow.org/api_docs/python/tf/keras/Model#fit
-#     history = model.fit(x=nyu_data_generator,
-#                         epochs=10, callbacks=[cp_callback])#(x_val, y_val))
-#
-#     # history = model.fit_generator(nyu_data_generator, steps_per_epoch=5, epochs=1)
-#
-#     print('\nhistory dict:', history.history)
-#
-#     # Evaluate the model on the test data using `evaluate`
-#     # print('\n# Evaluate on test data')
-#     # results = model.evaluate(x_test, y_test, batch_size=128)
-#     # print('test loss, test acc:', results)
-#
-#     # # Generate predictions (probabilities -- the output of the last layer)
-#     # # on new data using `predict`
-#     # print('\n# Generate predictions for 3 samples')
-#     # predictions = model.predict(x_test[:3])
-#     # print('predictions shape:', predictions.shape)
-
 def main():
     print(tf.__version__)
 
@@ -185,31 +116,30 @@ def main():
 
     latest_checkpoint_refine = tf.train.latest_checkpoint(REFINED_CHECKPOINT_DIR)
     latest_checkpoint_coarse = tf.train.latest_checkpoint(COARSE_CHECKPOINT_DIR)
-    refine_model, coarse_model = models.refine_model_def()
-    # if RUN_REFINE:
-    #     refine_model, coarse_model = models.refine_model_def()
-    #     # model = refine_model
-    #     # if latest_checkpoint_refine:
-    #     #     print("\nRestored refine model from checkpoint")
-    #     #     refine_model.load_weights(latest_checkpoint_refine)
-    #     # elif latest_checkpoint_coarse:
-    #     #     print("\nRestored coarse model from checkpoint")
-    #     #     coarse_model.load_weights(latest_checkpoint_coarse)
-    #     # else:
-    #     #     print("\nCoarse model not restored. Please run coarse model first")
-    #     #     return
-    # else:
-    #     coarse_model, _, _ = models.coarse_model_def()
-    #     model = coarse_model
-    #     if latest_checkpoint_coarse:
-    #         print("\nRestored coarse model from checkpoint")
-    #         coarse_model.load_weights(latest_checkpoint_coarse)
-    #     else:
-    #         print("\nNo coarse checkpoint saved")
+    if RUN_REFINE:
+        refine_model, coarse_model = models.refine_model_def()
+        model = refine_model
+        if latest_checkpoint_refine:
+            print("\nRestored refine model from checkpoint")
+            refine_model.load_weights(latest_checkpoint_refine)
+        elif latest_checkpoint_coarse:
+            print("\nRestored coarse model from checkpoint")
+            coarse_model.load_weights(latest_checkpoint_coarse)
+        else:
+            print("\nCoarse model not restored. Please run coarse model first")
+            return
+    else:
+        coarse_model, _, _ = models.coarse_model_def()
+        model = coarse_model
+        if latest_checkpoint_coarse:
+            print("\nRestored coarse model from checkpoint")
+            coarse_model.load_weights(latest_checkpoint_coarse)
+        else:
+            print("\nNo coarse checkpoint saved")
 
     nyu_data_generator = NyuDepthGenerator(batch_size=10)
 
-    refine_model.compile(optimizer=keras.optimizers.Adam(),  # Optimizer
+    model.compile(optimizer=keras.optimizers.Adam(),  # Optimizer
                   # Loss function to minimize
                   loss=depth_loss,
                   # List of metrics to monitor
@@ -217,20 +147,20 @@ def main():
 
     print('# Fit model on training data')
     if RUN_REFINE:
-        history = refine_model.fit(x=nyu_data_generator,
+        history = model.fit(x=nyu_data_generator,
                             epochs=300, callbacks=[cp_callback_refine])
     else:
-        history = coarse_model.fit(x=nyu_data_generator,
+        history = model.fit(x=nyu_data_generator,
                             epochs=300, callbacks=[cp_callback_coarse])
     print('\nhistory dict:', history.history)
     np.savetxt("loss_history.txt", history.history["loss"], delimiter=",")
 
-    result = refine_model.evaluate(x=nyu_data_generator, steps=1)
+    result = model.evaluate(x=nyu_data_generator, steps=1)
     print("test loss: ", result)
 
     if not os.path.isdir(PREDICT_FILE_PATH):
         os.mkdir(PREDICT_FILE_PATH)
-    predictions = refine_model.predict(x=nyu_data_generator, steps=1)
+    predictions = model.predict(x=nyu_data_generator, steps=1)
     print('predictions shape:', predictions.shape)
     for i in range(predictions.shape[0]):
         predictions[i] = (predictions[i] / np.max(predictions[i])) * 255.0
@@ -251,8 +181,3 @@ def debug_display_rgbd_pair(rgb, d):
 
 if __name__ == '__main__':
     main()
-    # x_train, y_train = csv_inputs()
-    # print("x_train shape: " + str(x_train.shape))
-    # print("y_train shape: " + str(y_train.shape))
-
-    # debug_display_rgbd_pair(x_train[0], y_train[0])

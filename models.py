@@ -73,30 +73,11 @@ def coarse_model_def():
     flat = BatchNormalization()(flat)
     coarse_output = Reshape((TARGET_HEIGHT, TARGET_WIDTH, 1))(flat)
 
-    # mat = Reshape((64, 64, 1))(flat)
-    #
-    # upsamp = UpSampling2D((2, 2))(mat)
-    #
-    # out1 = Conv2D(1, (74, 55))(upsamp)
-    # out1 = BatchNormalization()(out1)
-    # # model.add(Flatten())
-    # # model.add(Dense(4096))
-    # # model.add(BatchNormalization())
-    # # model.add(Activation("linear"))
-    # # model.add(Dropout(0.4))
-    #
-    # # model.add(Reshape((64, 64,1)))
-    #
-    # # model.add(UpSampling2D(size=(2,2)))
-    # # model.add(Conv2D(1,(74,55),padding='valid'))
-
-
     coarse_model = Model(inputs=first_layer, outputs=coarse_output)
     coarse_model.summary()
     return coarse_model, coarse_output, first_layer
 
 def refine_model_def():
-    second_layer = Input(shape=(IMAGE_HEIGHT, IMAGE_WIDTH, 3))
     coarse_model, coarse_output, first_layer = coarse_model_def()
     conv21 = Conv2D(63, (9, 9), strides=(2, 2), padding='valid')(first_layer)
     b21 = BatchNormalization()(conv21)
@@ -173,22 +154,3 @@ def refinedNetworkModel(coarse_training_results):
     model = Model(inputs=[layer1, coarse_layer], outputs=out)
     model.summary()
     return model
-
-# def refinedNetworkModelSequential(coarse_training_results):
-#     first_layer = Sequential()
-#     first_layer.add(Conv2D(filters = 63, kernel_size= (9, 9),
-#                     strides=(2, 2),
-#                     padding="valid",
-#                     input_shape=[IMAGE_WIDTH, IMAGE_HEIGHT, 3]))
-#     first_layer.add(Activation("relu"))
-#     first_layer.add(BatchNormalization())
-#     first_layer.add(MaxPooling2D(pool_size=(2,2)))
-
-
-#     merged_model = Concatenate([first_layer, coarse_training_results]) 
-#     merged_model.add(Conv2D(filters = 64, kernel_size=(5, 5), padding="same"))
-#     merged_model.add(BatchNormalization())
-#     merged_model.add(Conv2D(filters = 1, kernel_size=(5, 5), padding="same"))
-#     merged_model.add(BatchNormalization())
-#     merged_model.summary()
-#     return model
