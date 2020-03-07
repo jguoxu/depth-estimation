@@ -100,7 +100,7 @@ def main():
     csv_logger = CSVLogger('log.csv', append=False, separator=',')
 
     nyu_data_generator = NyuDepthGenerator(batch_size=10, csv_path='data/train.csv')
-    eval_data_generator = NyuDepthGenerator(batch_size=1, csv_path='data/dev.csv')
+    # eval_data_generator = NyuDepthGenerator(batch_size=1, csv_path='data/dev.csv')
 
     latest_checkpoint_refine = tf.train.latest_checkpoint(REFINED_CHECKPOINT_DIR)
     latest_checkpoint_coarse = tf.train.latest_checkpoint(COARSE_CHECKPOINT_DIR)
@@ -134,23 +134,21 @@ def main():
     print('Fit model on training data')
     if RUN_REFINE:
         history = model.fit(x=nyu_data_generator,
-                            validation_data=eval_data_generator,
-                            epochs=175, callbacks=[cp_callback_refine, csv_logger])
+                            epochs=30, callbacks=[cp_callback_refine, csv_logger])
     else:
         history = model.fit(x=nyu_data_generator,
-                            validation_data=eval_data_generator,
-                            epochs=175, callbacks=[cp_callback_coarse, csv_logger])
+                            epochs=30, callbacks=[cp_callback_coarse, csv_logger])
 
     print('\nHistory dict:', history.history)
 
 
-    result = model.evaluate(x=eval_data_generator, steps=144)
+    result = model.evaluate(x=nyu_data_generator, steps=1)
     print("Final eval loss: ", result)
 
     if not os.path.isdir(PREDICT_FILE_PATH):
         os.mkdir(PREDICT_FILE_PATH)
 
-    predictions = model.predict(x=eval_data_generator, steps=144)
+    predictions = model.predict(x=nyu_data_generator, steps=1)
     print("Prediction dim: " + str(predictions.shape))
 
     for i in range(predictions.shape[0]):
