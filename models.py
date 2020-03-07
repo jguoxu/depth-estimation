@@ -38,7 +38,7 @@ def coarse_network_model():
     return coarse_model, coarse_output, first_layer
 
 def refined_network_model():
-    coarse_model, coarse_output, first_layer = coarse_model_def()
+    coarse_model, coarse_output, first_layer = coarse_network_model()
     conv21 = Conv2D(63, (9, 9), strides=(2, 2), padding='valid')(first_layer)
     b21 = BatchNormalization()(conv21)
     p21 = MaxPooling2D(pool_size=(2, 2))(b21)
