@@ -72,10 +72,11 @@ def depth_loss(y_true, y_pred):
     # without discarding infinity pixels, the loss will quickly gets to nan.
     lnYTrue = tf.where(tf.math.is_inf(y_true), tf.ones_like(y_true), y_true)
     lnYPred = tf.where(tf.math.is_inf(y_pred), tf.ones_like(y_pred), y_pred)
-
-    invalid_depths = tf.where(y_true < 0, 0.0, 1.0)
-    lnYTrue = tf.multiply(lnYTrue, invalid_depths)
-    lnYPred = tf.multiply(lnYPred, invalid_depths)
+ 
+    # xuguo: disabel invalid depth
+    # invalid_depths = tf.where(y_true < 0, 0.0, 1.0)
+    # lnYTrue = tf.multiply(lnYTrue, invalid_depths)
+    # lnYPred = tf.multiply(lnYPred, invalid_depths)
 
     d_arr = K.cast(lnYTrue - lnYPred, dtype='float32')
 
