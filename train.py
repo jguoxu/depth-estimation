@@ -27,7 +27,7 @@ REFINED_CHECKPOINT_PATH = 'checkpoints/refined/refined_ckpt'
 REFINED_CHECKPOINT_DIR = os.path.dirname(REFINED_CHECKPOINT_PATH)
 PREDICT_FILE_PATH = 'data/predict'
 
-RUN_REFINE = True
+RUN_REFINE = False
 
 class NyuDepthGenerator(keras.utils.Sequence):
 
@@ -73,9 +73,9 @@ def depth_loss(y_true, y_pred):
     lnYTrue = tf.where(tf.math.is_inf(y_true), tf.ones_like(y_true), y_true)
     lnYPred = tf.where(tf.math.is_inf(y_pred), tf.ones_like(y_pred), y_pred)
 
-    invalid_depths = tf.where(y_true < 0, 0.0, 1.0)
-    lnYTrue = tf.multiply(lnYTrue, invalid_depths)
-    lnYPred = tf.multiply(lnYPred, invalid_depths)
+#    invalid_depths = tf.where(y_true < 0, 0.0, 1.0)
+#    lnYTrue = tf.multiply(lnYTrue, invalid_depths)
+#    lnYPred = tf.multiply(lnYPred, invalid_depths)
 
     d_arr = K.cast(lnYTrue - lnYPred, dtype='float32')
 
