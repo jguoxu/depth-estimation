@@ -27,7 +27,7 @@ REFINED_CHECKPOINT_PATH = 'checkpoints/refined/refined_ckpt'
 REFINED_CHECKPOINT_DIR = os.path.dirname(REFINED_CHECKPOINT_PATH)
 PREDICT_FILE_PATH = 'data/predict'
 
-RUN_REFINE = True
+RUN_REFINE = False
 
 class NyuDepthGenerator(keras.utils.Sequence):
 
@@ -73,9 +73,9 @@ def depth_loss(y_true, y_pred):
     lnYTrue = tf.where(tf.math.is_inf(y_true), tf.ones_like(y_true), y_true)
     lnYPred = tf.where(tf.math.is_inf(y_pred), tf.ones_like(y_pred), y_pred)
 
-    invalid_depths = tf.where(y_true < 0, 0.0, 1.0)
-    lnYTrue = tf.multiply(lnYTrue, invalid_depths)
-    lnYPred = tf.multiply(lnYPred, invalid_depths)
+#    invalid_depths = tf.where(y_true < 0, 0.0, 1.0)
+#    lnYTrue = tf.multiply(lnYTrue, invalid_depths)
+#    lnYPred = tf.multiply(lnYPred, invalid_depths)
 
     d_arr = K.cast(lnYTrue - lnYPred, dtype='float32')
 
@@ -100,7 +100,7 @@ def main():
     csv_logger = CSVLogger('log.csv', append=False, separator=',')
 
     nyu_data_generator = NyuDepthGenerator(batch_size=10, csv_path='data/train.csv')
-    eval_data_generator = NyuDepthGenerator(batch_size=1, csv_path='data/dev.csv')
+    # eval_data_generator = NyuDepthGenerator(batch_size=1, csv_path='data/dev.csv')
 
     latest_checkpoint_refine = tf.train.latest_checkpoint(REFINED_CHECKPOINT_DIR)
     latest_checkpoint_coarse = tf.train.latest_checkpoint(COARSE_CHECKPOINT_DIR)
@@ -134,23 +134,21 @@ def main():
     print('Fit model on training data')
     if RUN_REFINE:
         history = model.fit(x=nyu_data_generator,
-                            validation_data=eval_data_generator,
-                            epochs=175, callbacks=[cp_callback_refine, csv_logger])
+                            epochs=30, callbacks=[cp_callback_refine, csv_logger])
     else:
         history = model.fit(x=nyu_data_generator,
-                            validation_data=eval_data_generator,
-                            epochs=175, callbacks=[cp_callback_coarse, csv_logger])
+                            epochs=30, callbacks=[cp_callback_coarse, csv_logger])
 
     print('\nHistory dict:', history.history)
 
 
-    result = model.evaluate(x=eval_data_generator, steps=144)
+    result = model.evaluate(x=nyu_data_generator, steps=1)
     print("Final eval loss: ", result)
 
     if not os.path.isdir(PREDICT_FILE_PATH):
         os.mkdir(PREDICT_FILE_PATH)
 
-    predictions = model.predict(x=eval_data_generator, steps=144)
+    predictions = model.predict(x=nyu_data_generator, steps=1)
     print("Prediction dim: " + str(predictions.shape))
 
     for i in range(predictions.shape[0]):

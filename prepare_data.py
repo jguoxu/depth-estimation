@@ -9,7 +9,7 @@ NYU_FILE_URL = 'http://horatio.cs.nyu.edu/mit/silberman/nyu_depth_v2/nyu_depth_v
 NYU_FILE_PATH = 'data/nyu_depth_v2_labeled.mat'
 TRAIN_FILE_PATH = 'data/train'
 MAX_DEPTH_METER = 6.0
-DEV_PERCENT = 0.1 # split 10% data to dev examples
+DEV_PERCENT = 0.0 # split 10% data to dev examples
 
 def convert_nyu(path):
     if not os.path.isfile(path):
