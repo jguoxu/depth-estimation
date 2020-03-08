@@ -82,16 +82,7 @@ def depth_loss(y_true, y_pred):
 def main():
     print(tf.__version__)
 
-    cp_callback_coarse = tf.keras.callbacks.ModelCheckpoint(filepath=COARSE_CHECKPOINT_PATH,
-                                                     save_weights_only=True,
-                                                     verbose=1, period=10)
-    cp_callback_refine = tf.keras.callbacks.ModelCheckpoint(filepath=REFINED_CHECKPOINT_PATH,
-                                                            save_weights_only=True,
-                                                            verbose=1, period=10)
-
-    csv_logger = CSVLogger('log.csv', append=False, separator=',')
-
-    x_train, y_train = csv_inputs()
+    x_train, _ = csv_inputs()
 
     latest_checkpoint_refine = tf.train.latest_checkpoint(REFINED_CHECKPOINT_DIR)
     latest_checkpoint_coarse = tf.train.latest_checkpoint(COARSE_CHECKPOINT_DIR)
@@ -121,16 +112,6 @@ def main():
                   loss=depth_loss,
                   # List of metrics to monitor
                   metrics=None)
-
-    print('Fit model on training data')
-    if RUN_REFINE:
-        history = model.fit(x=x_train, y = y_train,
-                            epochs=30, callbacks=[cp_callback_refine, csv_logger])
-    else:
-        history = model.fit(x=x_train, y = y_train,
-                            epochs=30, callbacks=[cp_callback_coarse, csv_logger])
-
-    print('\nHistory dict:', history.history)
 
 
     result = model.evaluate(x=x_train)
