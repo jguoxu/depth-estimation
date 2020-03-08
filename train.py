@@ -129,15 +129,6 @@ def main():
                   # List of metrics to monitor
                   metrics=None)
 
-<<<<<<< HEAD
-    # print('Fit model on training data')
-    # if RUN_REFINE:
-    #     history = model.fit(x=nyu_data_generator,
-    #                         epochs=30, callbacks=[cp_callback_refine, csv_logger])
-    # else:
-    #     history = model.fit(x=nyu_data_generator,
-    #                         epochs=30, callbacks=[cp_callback_coarse, csv_logger])
-=======
     predict_while_train = PredictWhileTrain(nyu_data_generator)
     if not os.path.isdir(PREDICT_FILE_PATH):
         os.mkdir(TRAIN_PREDICT_FILE_PATH)
@@ -148,7 +139,6 @@ def main():
     else:
         history = model.fit(x=nyu_data_generator,
                             epochs=30, callbacks=[cp_callback_coarse, csv_logger, predict_while_train])
->>>>>>> origin/master
 
     # print('\nHistory dict:', history.history)
 

@@ -27,7 +27,7 @@ REFINED_CHECKPOINT_PATH = 'checkpoints/refined/refined_ckpt'
 REFINED_CHECKPOINT_DIR = os.path.dirname(REFINED_CHECKPOINT_PATH)
 PREDICT_FILE_PATH = 'data/predict'
 
-RUN_REFINE = False
+RUN_REFINE = True
 
 def csv_inputs(csv_file_path='data/train.csv'):	
     x_train = []
@@ -56,33 +56,8 @@ def csv_inputs(csv_file_path='data/train.csv'):
     return np.array(x_train) / 255.0, np.array(y_train) / 255.0
 
 
-# refered from: https://github.com/jahab/Depth-estimation/blob/master/Depth_Estimation_GD.ipynb
-def depth_loss(y_true, y_pred):
-    y_true = K.cast(y_true, dtype='float32')
-    y_pred = K.cast(y_pred, dtype='float32')
-
-    # without discarding infinity pixels, the loss will quickly gets to nan.
-    lnYTrue = tf.where(tf.math.is_inf(y_true), tf.ones_like(y_true), y_true)
-    lnYPred = tf.where(tf.math.is_inf(y_pred), tf.ones_like(y_pred), y_pred)
-
-#    invalid_depths = tf.where(y_true < 0, 0.0, 1.0)
-#    lnYTrue = tf.multiply(lnYTrue, invalid_depths)
-#    lnYPred = tf.multiply(lnYPred, invalid_depths)
-
-    d_arr = K.cast(lnYTrue - lnYPred, dtype='float32')
-
-    log_diff = K.cast(K.sum(K.square(d_arr)) / 4070.0, dtype='float32')
-    penalty = K.square(K.sum(d_arr)) / K.cast(K.square(4070.0), dtype='float32')
-    
-    loss = log_diff+penalty
-
-    return loss
-
-
 def main():
     print(tf.__version__)
-
-    x_train, _ = csv_inputs()
 
     latest_checkpoint_refine = tf.train.latest_checkpoint(REFINED_CHECKPOINT_DIR)
     latest_checkpoint_coarse = tf.train.latest_checkpoint(COARSE_CHECKPOINT_DIR)
@@ -109,25 +84,34 @@ def main():
 
     model.compile(optimizer=keras.optimizers.Adam(),  # Optimizer
                   # Loss function to minimize
-                  loss=depth_loss,
+                  loss=models.depth_loss,
                   # List of metrics to monitor
                   metrics=None)
 
 
-    result = model.evaluate(x=x_train)
-    print("Final eval loss: ", result)
+    x_eval, y_eval = csv_inputs(csv_file_path='data/dev.csv')
+    result = model.evaluate(x=x_eval, y=y_eval)
+    print("Final eval loss on validation: ", result)
 
     if not os.path.isdir(PREDICT_FILE_PATH):
         os.mkdir(PREDICT_FILE_PATH)
 
-    predictions = model.predict(x=x_train)
+    predictions = model.predict(x=x_eval)
     print("Prediction dim: " + str(predictions.shape))
 
     for i in range(predictions.shape[0]):
         predictions[i] = (predictions[i] / np.max(predictions[i])) * 255.0
-        image_name = os.path.join(PREDICT_FILE_PATH, '%05d_d.png' % i)
-        image_im = Image.fromarray(np.uint8(predictions[i].reshape(TARGET_HEIGHT, TARGET_WIDTH)), mode="L")
-        image_im.save(image_name)
+        prediction_name = os.path.join(PREDICT_FILE_PATH, '%05d_predict.png' % i)
+        prediction_im = Image.fromarray(np.uint8(predictions[i].reshape(TARGET_HEIGHT, TARGET_WIDTH)))
+        prediction_im.save(prediction_name)
+
+        color_name = os.path.join(PREDICT_FILE_PATH, '%05d_c.png' % i)
+        color_im = Image.fromarray(np.uint8(x_eval[i] * 255.0))
+        color_im.save(color_name)
+
+        depth_name = os.path.join(PREDICT_FILE_PATH, '%05d_d.png' % i)
+        depth_im = Image.fromarray(np.uint8(y_eval[i] * 255.0))
+        depth_im.save(depth_name)
 
 
 if __name__ == '__main__':

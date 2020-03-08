@@ -114,26 +114,6 @@ def main():
     result = model.evaluate(x=x_eval, y=y_eval)
     print("Final eval loss on validation: ", result)
 
-    if not os.path.isdir(PREDICT_FILE_PATH):
-        os.mkdir(PREDICT_FILE_PATH)
-
-    predictions = model.predict(x=x_eval)
-    print("Prediction dim: " + str(predictions.shape))
-
-    for i in range(predictions.shape[0]):
-        predictions[i] = (predictions[i] / np.max(predictions[i])) * 255.0
-        prediction_name = os.path.join(PREDICT_FILE_PATH, '%05d_predict.png' % i)
-        prediction_im = Image.fromarray(np.uint8(predictions[i].reshape(TARGET_HEIGHT, TARGET_WIDTH)))
-        prediction_im.save(prediction_name)
-
-        color_name = os.path.join(PREDICT_FILE_PATH, '%05d_c.png' % i)
-        color_im = Image.fromarray(np.uint8(x_eval[i] * 255.0))
-        color_im.save(color_name)
-
-        depth_name = os.path.join(PREDICT_FILE_PATH, '%05d_d.png' % i)
-        depth_im = Image.fromarray(np.uint8(y_eval[i] * 255.0))
-        depth_im.save(depth_name)
-
 
 if __name__ == '__main__':
     main()
