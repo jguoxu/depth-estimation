@@ -49,11 +49,17 @@ def depth_loss_2(y_true, y_pred):
     lnYPred = tf.multiply(lnYPred, invalid_depths)
 
     d_arr = K.cast(lnYTrue - lnYPred, dtype='float32')
+    print("d_arr shape")
+    print(d_arr.shape)
 
     log_diff = K.cast(K.sum(K.square(d_arr), axis = 1) / 4070.0, dtype='float32')
+    print("log_diff")
+    print(log_diff.shape)
     penalty = K.square(K.sum(d_arr, axis = 1)) / K.cast(K.square(4070.0), dtype='float32')
 
     loss = log_diff - 0.5 * penalty
+    print("loss")
+    print(loss.shape)
     loss = K.mean(loss)
 
     return loss
