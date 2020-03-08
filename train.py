@@ -134,10 +134,10 @@ def main():
     print('Fit model on training data')
     if RUN_REFINE:
         history = model.fit(x=nyu_data_generator,
-                            epochs=30, callbacks=[cp_callback_refine, csv_logger])
+                            epochs=100, callbacks=[cp_callback_refine, csv_logger])
     else:
         history = model.fit(x=nyu_data_generator,
-                            epochs=30, callbacks=[cp_callback_coarse, csv_logger])
+                            epochs=100, callbacks=[cp_callback_coarse, csv_logger])
 
     print('\nHistory dict:', history.history)
 
