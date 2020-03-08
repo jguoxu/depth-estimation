@@ -27,7 +27,7 @@ REFINED_CHECKPOINT_PATH = 'checkpoints/refined/refined_ckpt'
 REFINED_CHECKPOINT_DIR = os.path.dirname(REFINED_CHECKPOINT_PATH)
 PREDICT_FILE_PATH = 'data/predict'
 
-RUN_REFINE = True
+RUN_REFINE = False
 
 class NyuDepthGenerator(keras.utils.Sequence):
 
@@ -135,11 +135,11 @@ def main():
     if RUN_REFINE:
         history = model.fit(x=nyu_data_generator,
                             validation_data=eval_data_generator,
-                            epochs=175, callbacks=[cp_callback_refine, csv_logger])
+                            epochs=25, callbacks=[cp_callback_refine, csv_logger])
     else:
         history = model.fit(x=nyu_data_generator,
                             validation_data=eval_data_generator,
-                            epochs=175, callbacks=[cp_callback_coarse, csv_logger])
+                            epochs=25, callbacks=[cp_callback_coarse, csv_logger])
 
     print('\nHistory dict:', history.history)
 
