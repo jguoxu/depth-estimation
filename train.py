@@ -26,8 +26,29 @@ COARSE_CHECKPOINT_DIR = os.path.dirname(COARSE_CHECKPOINT_PATH)
 REFINED_CHECKPOINT_PATH = 'checkpoints/refined/refined_ckpt'
 REFINED_CHECKPOINT_DIR = os.path.dirname(REFINED_CHECKPOINT_PATH)
 PREDICT_FILE_PATH = 'data/predict'
+TRAIN_PREDICT_FILE_PATH = 'data/predict_train'
 
 RUN_REFINE = False
+
+class PredictWhileTrain(keras.callbacks.Callback):
+    def __init__(self, input_generator):
+        self.input_generator = input_generator
+
+    def on_epoch_end(self, epoch, logs={}):
+        if epoch % 30 != 0:
+            return
+        folder_name = os.path.join(TRAIN_PREDICT_FILE_PATH, 'predict_train_%d' % epoch)
+        if not os.path.isdir(folder_name):
+            os.mkdir(folder_name)
+        predictions = self.model.predict(x=self.input_generator, steps=1)
+
+        for i in range(predictions.shape[0]):
+            predictions[i] = (predictions[i] / np.max(predictions[i])) * 255.0
+            image_name = os.path.join(folder_name, '%05d_d.png' % i)
+            image_im = Image.fromarray(np.uint8(predictions[i].reshape(TARGET_HEIGHT, TARGET_WIDTH)), mode="L")
+            image_im.save(image_name)
+
+        print("Saved output predictions for epoch number " + str(epoch))
 
 class NyuDepthGenerator(keras.utils.Sequence):
 
@@ -131,13 +152,16 @@ def main():
                   # List of metrics to monitor
                   metrics=None)
 
+    predict_while_train = PredictWhileTrain(nyu_data_generator)
+    if not os.path.isdir(PREDICT_FILE_PATH):
+        os.mkdir(TRAIN_PREDICT_FILE_PATH)
     print('Fit model on training data')
     if RUN_REFINE:
         history = model.fit(x=nyu_data_generator,
-                            epochs=30, callbacks=[cp_callback_refine, csv_logger])
+                            epochs=30, callbacks=[cp_callback_refine, csv_logger, predict_while_train])
     else:
         history = model.fit(x=nyu_data_generator,
-                            epochs=30, callbacks=[cp_callback_coarse, csv_logger])
+                            epochs=30, callbacks=[cp_callback_coarse, csv_logger, predict_while_train])
 
     print('\nHistory dict:', history.history)
 
