@@ -84,10 +84,10 @@ def main():
 
     cp_callback_coarse = tf.keras.callbacks.ModelCheckpoint(filepath=COARSE_CHECKPOINT_PATH,
                                                      save_weights_only=True,
-                                                     verbose=1)
+                                                     verbose=1, period=10)
     cp_callback_refine = tf.keras.callbacks.ModelCheckpoint(filepath=REFINED_CHECKPOINT_PATH,
                                                             save_weights_only=True,
-                                                            verbose=1)
+                                                            verbose=1, period=10)
 
     csv_logger = CSVLogger('log.csv', append=False, separator=',')
 
