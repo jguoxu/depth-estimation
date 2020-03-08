@@ -37,7 +37,7 @@ class PredictWhileTrain(keras.callbacks.Callback):
         self.x_train = x_train
 
     def on_epoch_end(self, epoch, logs={}):
-        if epoch % 30 != 0:
+        if epoch % 50 != 0:
             return
         folder_name = os.path.join(TRAIN_PREDICT_FILE_PATH, 'predict_train_%d' % epoch)
         if not os.path.isdir(folder_name):
