@@ -29,40 +29,6 @@ PREDICT_FILE_PATH = 'data/predict'
 
 RUN_REFINE = False
 
-# class NyuDepthGenerator(keras.utils.Sequence):
-
-#     def __init__(self, batch_size, csv_path='data/train.csv') :
-#         tf.keras.backend.clear_session() #Reset notebook state
-#         self.batch_size = batch_size
-
-#         self.csv_file = open(csv_path, mode='r')
-#         self.csv_lines = self.csv_file.readlines()
-
-
-#     def __len__(self) :
-#         return int(np.floor(len(self.csv_lines) / self.batch_size))
-
-
-#     def __getitem__(self, idx) :
-#         x_train = []
-#         y_train = []
-#         for i in range(idx * self.batch_size, (idx + 1) * self.batch_size):
-#             line = self.csv_lines[i]
-#             line = line.replace('\n', '')
-#             pairs = line.split(',')
-
-#             example = Image.open(pairs[0])
-#             label = Image.open(pairs[1])
-
-#             example = example.resize((IMAGE_WIDTH, IMAGE_HEIGHT))
-#             label = label.resize((TARGET_WIDTH, TARGET_HEIGHT))
-
-#             x_train.append(np.array(example))
-#             # flatten is needed because of the dense layer output is 1d
-#             y_train.append(np.array(label))
-
-#         return np.array(x_train) / 255.0, np.array(y_train) / 255.0
-
 def csv_inputs(csv_file_path='data/train.csv'):	
     x_train = []
     y_train = []
