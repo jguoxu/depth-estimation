@@ -2,6 +2,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import os.path
 import models
+import metrics
 
 # TensorFlow and tf.keras
 import tensorflow as tf
@@ -11,6 +12,7 @@ from tensorflow import keras
 from tensorflow.keras import layers
 from tensorflow.keras.callbacks import ModelCheckpoint, CSVLogger
 from tensorflow.keras.utils import multi_gpu_model
+from tensorflow.keras.metrics import RootMeanSquaredError
 
 # from scipy import imageio
 from PIL import Image
@@ -127,7 +129,8 @@ def main():
                   # Loss function to minimize
                   loss=models.depth_loss,
                   # List of metrics to monitor
-                  metrics=None)
+                  metrics=[RootMeanSquaredError(name='keras_default_RMSE'), 
+                  metrics.scale_invariant_loss, metrics.abs_relative_diff, metrics.squared_relative_diff])
 
     predict_while_train = PredictWhileTrain(nyu_data_generator)
     if not os.path.isdir(PREDICT_FILE_PATH):
