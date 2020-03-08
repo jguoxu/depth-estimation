@@ -2,6 +2,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import os.path
 import models
+import metrics
 
 # TensorFlow and tf.keras
 import tensorflow as tf
@@ -11,6 +12,7 @@ from tensorflow import keras
 from tensorflow.keras import layers
 from tensorflow.keras.callbacks import ModelCheckpoint, CSVLogger
 from tensorflow.keras.utils import multi_gpu_model
+from tensorflow.keras.metrics import RootMeanSquaredError
 
 # from scipy import imageio
 from PIL import Image
@@ -28,7 +30,7 @@ REFINED_CHECKPOINT_DIR = os.path.dirname(REFINED_CHECKPOINT_PATH)
 PREDICT_FILE_PATH = 'data/predict'
 TRAIN_PREDICT_FILE_PATH = 'data/predict_train'
 
-RUN_REFINE = False
+RUN_REFINE = True
 
 class PredictWhileTrain(keras.callbacks.Callback):
     def __init__(self, input_generator):
@@ -127,7 +129,7 @@ def main():
                   # Loss function to minimize
                   loss=models.depth_loss,
                   # List of metrics to monitor
-                  metrics=None)
+                  metrics=[RootMeanSquaredError(name='keras_default_RMSE'), metrics.scale_invariant_loss, metrics.scale_invariant_mse])
 
     predict_while_train = PredictWhileTrain(nyu_data_generator)
     if not os.path.isdir(PREDICT_FILE_PATH):
@@ -135,10 +137,10 @@ def main():
     print('Fit model on training data')
     if RUN_REFINE:
         history = model.fit(x=nyu_data_generator,
-                            epochs=30, callbacks=[cp_callback_refine, csv_logger, predict_while_train])
+                            epochs=10, callbacks=[cp_callback_refine, csv_logger, predict_while_train])
     else:
         history = model.fit(x=nyu_data_generator,
-                            epochs=30, callbacks=[cp_callback_coarse, csv_logger, predict_while_train])
+                            epochs=10, callbacks=[cp_callback_coarse, csv_logger, predict_while_train])
 
     print('\nHistory dict:', history.history)
 
