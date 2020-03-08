@@ -1,8 +1,34 @@
+import tensorflow as tf
+
 from tensorflow.keras.models import Sequential, Model
 from tensorflow.keras.layers import Dense, Dropout, Activation, Flatten, Conv2D, Input, MaxPooling2D, InputLayer,UpSampling2D, Reshape,UpSampling1D
 from tensorflow.keras.layers import BatchNormalization, concatenate
+import tensorflow.keras.backend as K
+
 from train import IMAGE_HEIGHT, IMAGE_WIDTH
 from train import TARGET_WIDTH, TARGET_HEIGHT
+
+# refered from: https://github.com/jahab/Depth-estimation/blob/master/Depth_Estimation_GD.ipynb
+def depth_loss(y_true, y_pred):
+    y_true = K.cast(y_true, dtype='float32')
+    y_pred = K.cast(y_pred, dtype='float32')
+
+    # without discarding infinity pixels, the loss will quickly gets to nan.
+    lnYTrue = tf.where(tf.math.is_inf(y_true), tf.ones_like(y_true), y_true)
+    lnYPred = tf.where(tf.math.is_inf(y_pred), tf.ones_like(y_pred), y_pred)
+
+#    invalid_depths = tf.where(y_true < 0, 0.0, 1.0)
+#    lnYTrue = tf.multiply(lnYTrue, invalid_depths)
+#    lnYPred = tf.multiply(lnYPred, invalid_depths)
+
+    d_arr = K.cast(lnYTrue - lnYPred, dtype='float32')
+
+    log_diff = K.cast(K.sum(K.square(d_arr)) / 4070.0, dtype='float32')
+    penalty = K.square(K.sum(d_arr)) / K.cast(K.square(4070.0), dtype='float32')
+    
+    loss = log_diff+penalty
+
+    return loss
 
 def coarse_network_model():
     first_layer = Input(shape=(IMAGE_HEIGHT, IMAGE_WIDTH, 3))
