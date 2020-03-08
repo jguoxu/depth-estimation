@@ -1,5 +1,7 @@
 data/train
 data/predict
+data/predict_train
 *.mat
 checkpoints/
 .DS_Store
+__pycache__
