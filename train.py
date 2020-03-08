@@ -26,8 +26,29 @@ COARSE_CHECKPOINT_DIR = os.path.dirname(COARSE_CHECKPOINT_PATH)
 REFINED_CHECKPOINT_PATH = 'checkpoints/refined/refined_ckpt'
 REFINED_CHECKPOINT_DIR = os.path.dirname(REFINED_CHECKPOINT_PATH)
 PREDICT_FILE_PATH = 'data/predict'
+TRAIN_PREDICT_FILE_PATH = 'data/predict_train'
 
 RUN_REFINE = False
+
+class PredictWhileTrain(keras.callbacks.Callback):
+    def __init__(self, input_generator):
+        self.input_generator = input_generator
+
+    def on_epoch_end(self, epoch, logs={}):
+        if epoch % 30 != 0:
+            return
+        folder_name = os.path.join(TRAIN_PREDICT_FILE_PATH, 'predict_train_%d' % epoch)
+        if not os.path.isdir(folder_name):
+            os.mkdir(folder_name)
+        predictions = self.model.predict(x=self.input_generator, steps=1)
+
+        for i in range(predictions.shape[0]):
+            predictions[i] = (predictions[i] / np.max(predictions[i])) * 255.0
+            image_name = os.path.join(folder_name, '%05d_d.png' % i)
+            image_im = Image.fromarray(np.uint8(predictions[i].reshape(TARGET_HEIGHT, TARGET_WIDTH)), mode="L")
+            image_im.save(image_name)
+
+        print("Saved output predictions for epoch number " + str(epoch))
 
 class NyuDepthGenerator(keras.utils.Sequence):
 
@@ -62,29 +83,6 @@ class NyuDepthGenerator(keras.utils.Sequence):
             y_train.append(np.array(label))
 
         return np.array(x_train) / 255.0, np.array(y_train) / 255.0
-
-
-# refered from: https://github.com/jahab/Depth-estimation/blob/master/Depth_Estimation_GD.ipynb
-def depth_loss(y_true, y_pred):
-    y_true = K.cast(y_true, dtype='float32')
-    y_pred = K.cast(y_pred, dtype='float32')
-
-    # without discarding infinity pixels, the loss will quickly gets to nan.
-    lnYTrue = tf.where(tf.math.is_inf(y_true), tf.ones_like(y_true), y_true)
-    lnYPred = tf.where(tf.math.is_inf(y_pred), tf.ones_like(y_pred), y_pred)
-
-#    invalid_depths = tf.where(y_true < 0, 0.0, 1.0)
-#    lnYTrue = tf.multiply(lnYTrue, invalid_depths)
-#    lnYPred = tf.multiply(lnYPred, invalid_depths)
-
-    d_arr = K.cast(lnYTrue - lnYPred, dtype='float32')
-
-    log_diff = K.cast(K.sum(K.square(d_arr)) / 4070.0, dtype='float32')
-    penalty = K.square(K.sum(d_arr)) / K.cast(K.square(4070.0), dtype='float32')
-    
-    loss = log_diff+penalty
-
-    return loss
 
 
 def main():
@@ -127,10 +125,11 @@ def main():
 
     model.compile(optimizer=keras.optimizers.Adam(),  # Optimizer
                   # Loss function to minimize
-                  loss=depth_loss,
+                  loss=models.depth_loss,
                   # List of metrics to monitor
                   metrics=None)
 
+<<<<<<< HEAD
     # print('Fit model on training data')
     # if RUN_REFINE:
     #     history = model.fit(x=nyu_data_generator,
@@ -138,6 +137,18 @@ def main():
     # else:
     #     history = model.fit(x=nyu_data_generator,
     #                         epochs=30, callbacks=[cp_callback_coarse, csv_logger])
+=======
+    predict_while_train = PredictWhileTrain(nyu_data_generator)
+    if not os.path.isdir(PREDICT_FILE_PATH):
+        os.mkdir(TRAIN_PREDICT_FILE_PATH)
+    print('Fit model on training data')
+    if RUN_REFINE:
+        history = model.fit(x=nyu_data_generator,
+                            epochs=30, callbacks=[cp_callback_refine, csv_logger, predict_while_train])
+    else:
+        history = model.fit(x=nyu_data_generator,
+                            epochs=30, callbacks=[cp_callback_coarse, csv_logger, predict_while_train])
+>>>>>>> origin/master
 
     # print('\nHistory dict:', history.history)
 
