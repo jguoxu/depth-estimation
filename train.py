@@ -117,7 +117,7 @@ def main():
             print("\nCoarse model not restored. Please exit and run coarse model first")
             print("\nStarting one pass training")
     else:
-        coarse_model, _, _ = models.coarse_network_model()
+        coarse_model = models.coarse_network_model()
         model = coarse_model
         if latest_checkpoint_coarse:
             print("\nRestored coarse model from checkpoint")
