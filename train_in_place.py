@@ -122,7 +122,7 @@ def main():
                   metrics=None)
 
     predict_while_train = PredictWhileTrain(x_train)
-    if not os.path.isdir(PREDICT_FILE_PATH):
+    if not os.path.isdir(TRAIN_PREDICT_FILE_PATH):
         os.mkdir(TRAIN_PREDICT_FILE_PATH)
     print('Fit model on training data')
     if RUN_REFINE:
