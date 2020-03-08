@@ -30,6 +30,34 @@ def depth_loss(y_true, y_pred):
 
     return loss
 
+
+def depth_loss_2(y_true, y_pred):
+    print("Array shape: ", y_true.shape)
+    K.reshape(y_true, shape=(-1, 55*74))
+    K.reshape(y_pred, shape=(-1, 55 * 74))
+    y_true = K.cast(y_true, dtype='float32')
+    y_pred = K.cast(y_pred, dtype='float32')
+    print("y_pred")
+    print(y_pred)
+
+    # without discarding infinity pixels, the loss will quickly gets to nan.
+    lnYTrue = tf.where(tf.math.is_inf(y_true), tf.ones_like(y_true), y_true)
+    lnYPred = tf.where(tf.math.is_inf(y_pred), tf.ones_like(y_pred), y_pred)
+
+    invalid_depths = tf.where(y_true < 0, 0.0, 1.0)
+    lnYTrue = tf.multiply(lnYTrue, invalid_depths)
+    lnYPred = tf.multiply(lnYPred, invalid_depths)
+
+    d_arr = K.cast(lnYTrue - lnYPred, dtype='float32')
+
+    log_diff = K.cast(K.sum(K.square(d_arr), axis = 1) / 4070.0, dtype='float32')
+    penalty = K.square(K.sum(d_arr, axis = 1)) / K.cast(K.square(4070.0), dtype='float32')
+
+    loss = log_diff - 0.5 * penalty
+    loss = K.mean(loss)
+
+    return loss
+
 def coarse_network_model():
     first_layer = Input(shape=(IMAGE_HEIGHT, IMAGE_WIDTH, 3))
     conv1 = Conv2D(96, (11, 11), strides=(4, 4), padding='same')(first_layer)
