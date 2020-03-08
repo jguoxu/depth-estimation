@@ -124,7 +124,7 @@ def main():
                   metrics=[RootMeanSquaredError(name='keras_default_RMSE'), metrics.scale_invariant_loss, metrics.scale_invariant_mse])
 
     predict_while_train = PredictWhileTrain(x_train)
-    if not os.path.isdir(PREDICT_FILE_PATH):
+    if not os.path.isdir(TRAIN_PREDICT_FILE_PATH):
         os.mkdir(TRAIN_PREDICT_FILE_PATH)
     print('Fit model on training data')
     if RUN_REFINE:
