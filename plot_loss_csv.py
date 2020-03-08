@@ -6,6 +6,7 @@ import wget
 from PIL import Image
 import csv
 import matplotlib.pyplot as plt
+import matplotlib.image as mpimg
 
 
 CSV_PATH = 'log.csv'
@@ -25,13 +26,13 @@ def plot_csv(path):
             
             t.append(int(row[0]))
             loss.append(float(row[1]))
-            val_loss.append(float(row[2]))
+            # val_loss.append(float(row[2]))
 
     plt.plot(t, loss,  '-b', label='loss')
-    plt.plot(t, val_loss,  '-r', label='val loss')
+    # plt.plot(t, val_loss,  '-r', label='val loss')
     plt.xlabel("n iteration")
     plt.ylim(top=1)
-    plt.ylim(bottom=0)
+    plt.ylim(bottom=0.3)
     plt.legend(loc='upper left')
     plt.title("Loss")
 
