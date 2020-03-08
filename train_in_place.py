@@ -69,6 +69,7 @@ def main():
     csv_logger = CSVLogger('log.csv', append=False, separator=',')
 
     x_train, y_train = csv_inputs(csv_file_path='data/train.csv')
+    x_eval, y_eval = csv_inputs(csv_file_path='data/dev.csv')
 
     latest_checkpoint_refine = tf.train.latest_checkpoint(REFINED_CHECKPOINT_DIR)
     latest_checkpoint_coarse = tf.train.latest_checkpoint(COARSE_CHECKPOINT_DIR)
@@ -101,16 +102,14 @@ def main():
 
     print('Fit model on training data')
     if RUN_REFINE:
-        history = model.fit(x=x_train, y = y_train,
+        history = model.fit(x=x_train, y = y_train, validation_data=(x_eval, y_eval),
                             epochs=30, callbacks=[cp_callback_refine, csv_logger])
     else:
-        history = model.fit(x=x_train, y = y_train,
+        history = model.fit(x=x_train, y = y_train, validation_data=(x_eval, y_eval),
                             epochs=30, callbacks=[cp_callback_coarse, csv_logger])
 
     print('\nHistory dict:', history.history)
 
-
-    x_eval, y_eval = csv_inputs(csv_file_path='data/dev.csv')
     result = model.evaluate(x=x_eval, y=y_eval)
     print("Final eval loss on validation: ", result)
 
