@@ -122,8 +122,7 @@ def main():
                   loss=models.depth_loss,
                   # List of metrics to monitor
                   metrics=[RootMeanSquaredError(name='keras_default_RMSE'), 
-                  metrics.scale_invariant_loss, metrics.scale_invariant_mse, 
-                  metrics.abs_relative_diff, metrics.squared_relative_diff])
+                  metrics.scale_invariant_loss, metrics.abs_relative_diff, metrics.squared_relative_diff])
 
     predict_while_train = PredictWhileTrain(x_train)
     if not os.path.isdir(TRAIN_PREDICT_FILE_PATH):

@@ -30,7 +30,7 @@ REFINED_CHECKPOINT_DIR = os.path.dirname(REFINED_CHECKPOINT_PATH)
 PREDICT_FILE_PATH = 'data/predict'
 TRAIN_PREDICT_FILE_PATH = 'data/predict_train'
 
-RUN_REFINE = True
+RUN_REFINE = False
 
 class PredictWhileTrain(keras.callbacks.Callback):
     def __init__(self, input_generator):
@@ -130,9 +130,7 @@ def main():
                   loss=models.depth_loss,
                   # List of metrics to monitor
                   metrics=[RootMeanSquaredError(name='keras_default_RMSE'), 
-                  metrics.scale_invariant_loss, metrics.scale_invariant_mse, 
-                  metrics.abs_relative_diff, metrics.squared_relative_diff])
-
+                  metrics.scale_invariant_loss, metrics.abs_relative_diff, metrics.squared_relative_diff])
 
     predict_while_train = PredictWhileTrain(nyu_data_generator)
     if not os.path.isdir(PREDICT_FILE_PATH):

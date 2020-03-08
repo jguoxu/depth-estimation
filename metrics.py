@@ -18,13 +18,17 @@ def discardInfinityAndInvalid(y_true, y_pred):
 
 def abs_relative_diff(y_true, y_pred):
     y_true, y_pred = discardInfinityAndInvalid(K.cast(y_true, dtype='float32'), K.cast(y_pred, dtype='float32'))
-    single_diff = K.abs(y_true - y_pred) / y_true
+    d = K.cast(y_true - y_pred, dtype='float32')
+    single_diff = K.abs(d) / y_true
     mean_diff = K.sum(single_diff) / N
+    return mean_diff
 
-def squared_relative_diff(y_true, y_true):
+def squared_relative_diff(y_true, y_pred):
     y_true, y_pred = discardInfinityAndInvalid(K.cast(y_true, dtype='float32'), K.cast(y_pred, dtype='float32'))
-    single_diff = K.square(K.abs(y_true - y_pred)) / y_true
+    d = K.cast(y_true - y_pred, dtype='float32')
+    single_diff = K.square(K.abs(d)) / y_true
     mean_diff = K.sum(single_diff) / N
+    return mean_diff
 
 # "Training loss" or equation 4 from https://arxiv.org/pdf/1406.2283.pdf
 # a = mean(sum(sq(d)))
@@ -33,7 +37,6 @@ def squared_relative_diff(y_true, y_true):
 def scale_invariant_loss(y_true, y_pred):
     y_true, y_pred = discardInfinityAndInvalid(K.cast(y_true, dtype='float32'), K.cast(y_pred, dtype='float32'))
     d = K.cast(y_true - y_pred, dtype='float32')
-    
     #a
     sum_squared_d = K.sum(K.square(d))
     mean_sum_sq_d = sum_squared_d / N
