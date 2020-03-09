@@ -43,7 +43,7 @@ def convert_nyu(path):
     for i in range(file_count):
         image = np.transpose(h5file['images'][i], (2, 1, 0))
         depth = np.transpose(h5file['depths'][i], (1, 0))
-
+        
         image_name = os.path.join(TRAIN_FILE_PATH, '%05d_c.png' % (i))
         depth_name = os.path.join(TRAIN_FILE_PATH, '%05d_d.png' % (i))
 
