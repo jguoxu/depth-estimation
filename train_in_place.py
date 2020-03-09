@@ -120,7 +120,8 @@ def main():
     model.compile(optimizer=keras.optimizers.Adam(),  # Optimizer
                   # Loss function to minimize
                   loss=models.scale_invariant_loss,
-                  metrics=[metrics.depth_loss, metrics.abs_relative_diff, metrics.squared_relative_diff])
+                  metrics= metrics.scale_invariant_loss, 
+                  metrics.abs_relative_diff, metrics.squared_relative_diff, metrics.rmse_linear, metrics.rmse_log])
 
     predict_while_train = PredictWhileTrain(x_train)
     if not os.path.isdir(TRAIN_PREDICT_FILE_PATH):
