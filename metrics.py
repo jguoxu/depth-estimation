@@ -13,7 +13,7 @@ def discardInfinityAndInvalid(y_true, y_pred):
 
     invalid_depths = tf.where(y_true < 0, 0.0, 1.0)
     y_true = tf.multiply(y_true, invalid_depths)
-    t_pred = tf.multiply(y_pred, invalid_depths)
+    y_pred = tf.multiply(y_pred, invalid_depths)
     return y_true, y_pred
 
 def abs_relative_diff(y_true, y_pred):
