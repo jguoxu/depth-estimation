@@ -117,7 +117,7 @@ def main():
 
     model.compile(optimizer=keras.optimizers.Adam(),  # Optimizer
                   # Loss function to minimize
-                  loss=models.depth_loss_2,
+                  loss=models.depth_loss,
                   # List of metrics to monitor
                   metrics=None)
 
