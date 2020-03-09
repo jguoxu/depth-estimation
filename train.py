@@ -129,8 +129,8 @@ def main():
                   # Loss function to minimize
                   loss=models.depth_loss,
                   # List of metrics to monitor
-                  metrics=[RootMeanSquaredError(name='keras_default_RMSE'), 
-                  metrics.scale_invariant_loss, metrics.abs_relative_diff, metrics.squared_relative_diff])
+                  metrics= metrics.scale_invariant_loss, 
+                  metrics.abs_relative_diff, metrics.squared_relative_diff, metrics.rmse_linear, metrics.rmse_log])
 
     predict_while_train = PredictWhileTrain(nyu_data_generator)
     if not os.path.isdir(PREDICT_FILE_PATH):
