@@ -103,8 +103,8 @@ def refined_network_model():
     Concat = concatenate([coarse_output, p21])
     conv22 = Conv2D(64, (5, 5), padding='same')(Concat)
     b22 = BatchNormalization()(conv22)
-
-    out = Conv2D(1, (5, 5), padding='same')(b22)
+    d = Dropout(0.4)(b22)
+    out = Conv2D(1, (5, 5), padding='same')(d)
     out = BatchNormalization()(out)
 
     refine_model = Model(inputs=first_layer, outputs=out)
