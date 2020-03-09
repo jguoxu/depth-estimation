@@ -144,10 +144,10 @@ def main():
 
     if RUN_REFINE:
         history = model.fit(x=data_gen_train, validation_data=(x_eval, y_eval),
-                            epochs=30, callbacks=[cp_callback_refine, csv_logger, predict_while_train])
+                            epochs=100, callbacks=[cp_callback_refine, csv_logger, predict_while_train])
     else:
         history = model.fit(x=data_gen_train, validation_data=(x_eval, y_eval),
-                            epochs=30, callbacks=[cp_callback_coarse, csv_logger, predict_while_train])
+                            epochs=100, callbacks=[cp_callback_coarse, csv_logger, predict_while_train])
 
     print('\nHistory dict:', history.history)
 
