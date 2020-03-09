@@ -33,12 +33,14 @@ def depth_loss(y_true, y_pred):
 
 def depth_loss_2(y_true, y_pred):
     print("Array shape: ", y_true.shape)
-    K.reshape(y_true, (-1, 55*74))
-    K.reshape(y_pred, (-1, 55 * 74))
+    y_true = Reshape((55*74))(y_true)
+    y_pred = Reshape((55 * 74))(y_pred)
+    # K.reshape(y_true, (-1, 55*74))
+    # K.reshape(y_pred, (-1, 55 * 74))
+    print("y_pred")
+    print(y_pred.shape)
     y_true = K.cast(y_true, dtype='float32')
     y_pred = K.cast(y_pred, dtype='float32')
-    print("y_pred")
-    print(y_pred)
 
     # without discarding infinity pixels, the loss will quickly gets to nan.
     lnYTrue = tf.where(tf.math.is_inf(y_true), tf.ones_like(y_true), y_true)
