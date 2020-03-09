@@ -32,7 +32,6 @@ def depth_loss(y_true, y_pred):
 
 
 def depth_loss_2(y_true, y_pred):
-    print("Array shape: ", y_true.shape)
     y_true = Reshape((55*74 ,1))(y_true)
     y_pred = Reshape((55 * 74, 1))(y_pred)
     y_true = K.cast(y_true, dtype='float32')
