@@ -26,7 +26,7 @@ def depth_loss(y_true, y_pred):
     log_diff = K.cast(K.sum(K.square(d_arr)) / 4070.0, dtype='float32')
     penalty = K.square(K.sum(d_arr)) / K.cast(K.square(4070.0), dtype='float32')
     
-    loss = log_diff - 0.5*penalty
+    loss = log_diff + penalty
 
     return loss
 
