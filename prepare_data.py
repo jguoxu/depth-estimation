@@ -47,7 +47,7 @@ def convert_nyu(path):
         os.mkdir(TRAIN_FILE_PATH)
 
     file_count = h5file['images'].shape[0]
-    train_file_count = file_count * (1.0 - DEV_PERCENT)
+    train_file_count = 1
     for i in range(file_count):
         image = np.transpose(h5file['images'][i], (2, 1, 0))
         depth = np.transpose(h5file['depths'][i], (1, 0))
@@ -74,6 +74,8 @@ def convert_nyu(path):
             dev_examples.append((image_name, depth_name))
 
         print('Processed file: %i out of %d' % (i, file_count))
+        if i == 1:
+            break
 
     # write train_examples to csv
     with open('data/train.csv', 'w') as output:
