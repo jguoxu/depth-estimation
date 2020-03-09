@@ -128,7 +128,12 @@ def main():
                   # Loss function to minimize
                   loss=models.depth_loss,
                   # List of metrics to monitor
+<<<<<<< HEAD
                   metrics= [metrics.rmse, metrics.abs_relative_diff, metrics.squared_relative_diff])
+=======
+                  metrics= metrics.scale_invariant_loss, 
+                  metrics.abs_relative_diff, metrics.squared_relative_diff, metrics.rmse_linear, metrics.rmse_log])
+>>>>>>> 63ea50d23afd3bfe9b761200a3062e9cbefb49ad
 
     predict_while_train = PredictWhileTrain(nyu_data_generator)
     if not os.path.isdir(PREDICT_FILE_PATH):
