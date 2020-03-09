@@ -12,7 +12,6 @@ from tensorflow import keras
 from tensorflow.keras import layers
 from tensorflow.keras.callbacks import ModelCheckpoint, CSVLogger
 from tensorflow.keras.utils import multi_gpu_model
-from tensorflow.keras.metrics import RootMeanSquaredError
 
 # from scipy import imageio
 from PIL import Image
@@ -119,7 +118,7 @@ def main():
 
     model.compile(optimizer=keras.optimizers.Adam(),  # Optimizer
                   # Loss function to minimize
-                  loss=models.scale_invariant_loss,
+                  loss=models.depth_loss,
                   metrics= metrics.scale_invariant_loss, 
                   metrics.abs_relative_diff, metrics.squared_relative_diff, metrics.rmse_linear, metrics.rmse_log])
 
