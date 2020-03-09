@@ -59,7 +59,7 @@ def depth_loss_2(y_true, y_pred):
     print(log_diff.shape)
     penalty = K.square(K.sum(d_arr, axis = 1)) / K.cast(K.square(4070.0), dtype='float32')
 
-    loss = log_diff - 0.5 * penalty
+    loss = log_diff  + penalty
     print("loss")
     print(loss.shape)
     loss = K.mean(loss)
