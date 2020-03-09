@@ -39,8 +39,6 @@ def convert_nyu(path):
 
     file_count = h5file['images'].shape[0]
     train_file_count = file_count * (1.0 - DEV_PERCENT)
-    file_count = 100
-
     datagen = ImageDataGenerator()
     for i in range(file_count):
         image = np.transpose(h5file['images'][i], (2, 1, 0))
