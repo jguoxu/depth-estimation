@@ -47,14 +47,14 @@ def convert_nyu(path):
         os.mkdir(TRAIN_FILE_PATH)
 
     file_count = h5file['images'].shape[0]
-    train_file_count = 1
+    train_file_count = file_count * (1.0 - DEV_PERCENT)
     for i in range(file_count):
         image = np.transpose(h5file['images'][i], (2, 1, 0))
         depth = np.transpose(h5file['depths'][i], (1, 0))
 
         # Do not use max depth to scale, instead use constant MAX_DEPTH_METER
         # to make sure all depth image are distance is scaled proportionally.
-        depth = (depth / MAX_DEPTH_METER) * 255.0
+        depth = (depth / np.max(depth)) * 255.0
 
         image_name = os.path.join(TRAIN_FILE_PATH, '%05d_c.png' % (i))
         depth_name = os.path.join(TRAIN_FILE_PATH, '%05d_d.png' % (i))
@@ -74,8 +74,6 @@ def convert_nyu(path):
             dev_examples.append((image_name, depth_name))
 
         print('Processed file: %i out of %d' % (i, file_count))
-        if i == 1:
-            break
 
     # write train_examples to csv
     with open('data/train.csv', 'w') as output:
