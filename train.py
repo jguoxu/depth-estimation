@@ -12,7 +12,6 @@ from tensorflow import keras
 from tensorflow.keras import layers
 from tensorflow.keras.callbacks import ModelCheckpoint, CSVLogger
 from tensorflow.keras.utils import multi_gpu_model
-from tensorflow.keras.metrics import RootMeanSquaredError
 
 # from scipy import imageio
 from PIL import Image
