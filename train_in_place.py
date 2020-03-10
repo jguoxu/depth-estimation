@@ -131,7 +131,7 @@ def main():
     if RUN_REFINE:
         history = model.fit(x=x_train, y = y_train, 
         validation_data=(x_eval, y_eval),
-                            epochs=2005, callbacks=[cp_callback_refine, csv_logger, predict_while_train])
+        epochs=2005, callbacks=[cp_callback_refine, csv_logger, predict_while_train])
     else:
         history = model.fit(x=x_train, y = y_train, validation_data=(x_eval, y_eval),
                             epochs=2005, callbacks=[cp_callback_coarse, csv_logger, predict_while_train])
