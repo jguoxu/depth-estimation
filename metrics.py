@@ -51,7 +51,7 @@ def rmse_scale_invariant(y_true, y_pred):
     log_diff = K.cast(K.sum(K.square(d_arr), axis=1) / N, dtype='float32')
     penalty = K.square(K.sum(d_arr, axis=1)) / K.cast(K.square(N), dtype='float32')
 
-    diff = log_diff - penalty
+    diff = log_diff - 0.5*penalty
     rmse = K.sqrt(K.mean(diff))
 
     return rmse
