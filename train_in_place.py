@@ -119,9 +119,8 @@ def main():
 
     model.compile(optimizer=keras.optimizers.Adam(),  # Optimizer
                   # Loss function to minimize
-                  loss=models.depth_loss,
-                  metrics= [metrics.rmse, metrics.rmse_log, metrics.rmse_scale_invariance,
-                  metrics.abs_relative_diff, metrics.squared_relative_diff])
+                  loss=models.rmse_scale_invariance_log_loss,
+                  metrics= [metrics.abs_relative_diff, metrics.squared_relative_diff, metrics.rmse, metrics.rmse_log, metrics.rmse_scale_invariance_log])
 
     predict_while_train = PredictWhileTrain(x_train)
     early_stop = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=5)
