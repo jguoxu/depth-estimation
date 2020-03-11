@@ -33,7 +33,7 @@ REFINED_CHECKPOINT_DIR = os.path.dirname(REFINED_CHECKPOINT_PATH)
 PREDICT_FILE_PATH = 'data/predict'
 TRAIN_PREDICT_FILE_PATH = 'data/predict_train'
 
-RUN_REFINE = True
+RUN_REFINE = False
 NYU_FILE_PATH = 'data/nyu_depth_v2_labeled.mat'
 
 class PredictWhileTrain(keras.callbacks.Callback):
@@ -66,8 +66,7 @@ def main():
     y_eval = []
     h5file = h5py.File(NYU_FILE_PATH, 'r')
     file_count = h5file['images'].shape[0]
-        
-    file_count = 100
+
     dev_split = 0.9
     train_count = file_count * dev_split
     for i in range(file_count):
@@ -97,9 +96,9 @@ def main():
             y_eval.append(depth_np_arr)
 
     
-    x_train = np.array(x_train)
-    y_train = np.array(y_train)
-    x_eval = np.array(x_eval)
+    x_train = np.array(x_train) / 255.0
+    y_train = np.array(y_train) 
+    x_eval = np.array(x_eval) / 255.0
     y_eval = np.array(y_eval)
     print(x_train.shape)
     print(y_train.shape)
