@@ -16,14 +16,14 @@ def reshape(y_true, y_pred):
 
 # sets y true and pred to the same value if y true is invalid (0)
 def clean_y(y_true, y_pred):
-    y_pred = tf.where(y_true < np.finfo(np.float32).eps, tf.ones_like(y_true), y_pred)
-    y_true = tf.where(y_true < np.finfo(np.float32).eps, tf.ones_like(y_true), y_true)
+    # y_pred = tf.where(y_true < np.finfo(np.float32).eps, tf.ones_like(y_true), y_pred)
+    # y_true = tf.where(y_true < np.finfo(np.float32).eps, tf.ones_like(y_true), y_true)
     return y_true, y_pred
 
 
 def clean_x(y_true, y_pred):
-    y_true = tf.where(y_pred < np.finfo(np.float32).eps, tf.ones_like(y_pred), y_true)
-    y_pred = tf.where(y_pred < np.finfo(np.float32).eps, tf.ones_like(y_pred), y_pred)
+    # y_true = tf.where(y_pred < np.finfo(np.float32).eps, tf.ones_like(y_pred), y_true)
+    # y_pred = tf.where(y_pred < np.finfo(np.float32).eps, tf.ones_like(y_pred), y_pred)
     return y_true, y_pred
 
 
@@ -45,7 +45,7 @@ def rmse(y_true, y_pred):
     y_true, y_pred = reshape(y_true, y_pred)
     d = K.cast(y_pred - y_true, dtype='float32')
     a = K.square(d)
-    return K.sqrt(K.mean(K.sum(a, axis=1)/N))
+    return K.sqrt(K.sum(a, axis=1)/N)
 
 def rmse_log(y_true, y_pred):
     y_true, y_pred = reshape(y_true, y_pred)
