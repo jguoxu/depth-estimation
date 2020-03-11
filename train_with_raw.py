@@ -105,7 +105,6 @@ def main():
     print(y_train.shape)
     print(x_eval.shape)
     print(y_eval.shape)
-    return
 
 
     cp_callback_coarse = tf.keras.callbacks.ModelCheckpoint(filepath=COARSE_CHECKPOINT_PATH,
@@ -142,7 +141,7 @@ def main():
 
     model.compile(optimizer=keras.optimizers.Adam(),  # Optimizer
                   # Loss function to minimize
-                  loss=models.rmse_scale_invariance_log_loss,
+                  loss=models.depth_loss,
                   metrics= [metrics.abs_relative_diff, metrics.squared_relative_diff, metrics.rmse, metrics.rmse_log, metrics.rmse_scale_invariance_log])
 
     predict_while_train = PredictWhileTrain(x_train)

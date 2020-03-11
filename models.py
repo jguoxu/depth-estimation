@@ -44,7 +44,7 @@ def depth_loss(y_true, y_pred):
     log_diff = K.cast(K.sum(K.square(d_arr)) / 4070.0, dtype='float32')
     penalty = K.square(K.sum(d_arr)) / K.cast(K.square(4070.0), dtype='float32')
     
-    loss = log_diff - 0.5*penalty
+    loss = log_diff + penalty
 
     return loss
 
@@ -58,7 +58,7 @@ def rmse_scale_invariance_log_loss(y_true, y_pred):
     a = K.sum(K.log(y_true) - K.log(y_pred), axis=1) / N
     loss = K.sum(K.square(d + K.repeat(a, 4070)), axis=1) / N
     return K.mean(loss)
-    
+
 
 def depth_loss_2(y_true, y_pred):
     y_true = Reshape((55*74 ,1))(y_true)
