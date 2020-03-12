@@ -79,15 +79,13 @@ def main():
         image_im = Image.fromarray(np.uint8(image))
         image_im = image_im.resize((IMAGE_WIDTH, IMAGE_HEIGHT))
         image_np_arr = np.array(image_im)
-        # print ("image_np_arr shape: " + str(image_np_arr.shape))
 
         depth_scaled = (depth / 10.0) * 255.0
         depth_im = Image.fromarray(np.uint8(depth_scaled))
         depth_im = depth_im.resize((TARGET_WIDTH, TARGET_HEIGHT))
         depth_np_arr = np.array(depth_im)
         depth_np_arr = depth_np_arr / 255.0 * 10.0
-        # print ("depth_np_arr shape: " + str(depth_np_arr.shape))
-        # print ("depth_np_arr: " + str(depth_np_arr))
+
         if i < train_count:
             x_train.append(image_np_arr)
             y_train.append(depth_np_arr)
@@ -97,14 +95,9 @@ def main():
 
     
     x_train = np.array(x_train) / 255.0
-    y_train = np.array(y_train) 
+    y_train = np.array(y_train)
     x_eval = np.array(x_eval) / 255.0
     y_eval = np.array(y_eval)
-    print(x_train.shape)
-    print(y_train.shape)
-    print(x_eval.shape)
-    print(y_eval.shape)
-
 
     cp_callback_coarse = tf.keras.callbacks.ModelCheckpoint(filepath=COARSE_CHECKPOINT_PATH,
                                                      save_weights_only=True,
@@ -138,13 +131,11 @@ def main():
         else:
             print("\nNo coarse checkpoint saved")
 
-    model.compile(optimizer=keras.optimizers.Adam(),  # Optimizer
+    model.compile(optimizer=keras.optimizers.Adam(),
                   # Loss function to minimize
                   loss=models.depth_loss_2,
-                  metrics= [metrics.abs_relative_diff, metrics.squared_relative_diff, metrics.rmse, metrics.rmse_log, metrics.rmse_scale_invariance_log])
+                  metrics= [metrics.abs_relative_diff, metrics.squared_relative_diff, metrics.rmse])
 
-    predict_while_train = PredictWhileTrain(x_train)
-    early_stop = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=5)
     if not os.path.isdir(TRAIN_PREDICT_FILE_PATH):
         os.mkdir(TRAIN_PREDICT_FILE_PATH)
     print('Fit model on training data')
@@ -159,6 +150,7 @@ def main():
     print('\nHistory dict:', history.history)
 
     result = model.evaluate(x=x_eval, y=y_eval)
+    
     print("Final eval loss on validation: ", result)
 
 
