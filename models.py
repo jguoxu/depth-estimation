@@ -8,6 +8,24 @@ import tensorflow.keras.backend as K
 from train import IMAGE_HEIGHT, IMAGE_WIDTH
 from train import TARGET_WIDTH, TARGET_HEIGHT
 
+#reshape to batch of 1
+def reshape(y_true, y_pred):
+    y_true = Reshape((55 * 74 ,1))(y_true)
+    y_pred = Reshape((55 * 74, 1))(y_pred)
+    return y_true, y_pred
+
+# sets y true and pred to the same value if y true is invalid (0)
+def clean_y(y_true, y_pred):
+    y_pred = tf.where(y_true < np.finfo(np.float32).eps, tf.ones_like(y_true), y_pred)
+    y_true = tf.where(y_true < np.finfo(np.float32).eps, tf.ones_like(y_true), y_true)
+    return y_true, y_pred
+
+
+def clean_x(y_true, y_pred):
+    y_true = tf.where(y_pred < np.finfo(np.float32).eps, tf.ones_like(y_pred), y_true)
+    y_pred = tf.where(y_pred < np.finfo(np.float32).eps, tf.ones_like(y_pred), y_pred)
+    return y_true, y_pred
+
 # refered from: https://github.com/jahab/Depth-estimation/blob/master/Depth_Estimation_GD.ipynb
 def depth_loss(y_true, y_pred):
     y_true = K.cast(y_true, dtype='float32')
@@ -29,6 +47,17 @@ def depth_loss(y_true, y_pred):
     loss = log_diff + penalty
 
     return loss
+
+
+def rmse_scale_invariance_log_loss(y_true, y_pred):
+    y_true, y_pred = reshape(y_true, y_pred)
+    y_true, y_pred = clean_y(y_true, y_pred)
+    y_true, y_pred = clean_x(y_true, y_pred)
+
+    d = K.cast(K.log(y_pred) - K.log(y_true), dtype='float32')
+    a = K.sum(K.log(y_true) - K.log(y_pred), axis=1) / N
+    loss = K.sum(K.square(d + K.repeat(a, 4070)), axis=1) / N
+    return K.mean(loss)
 
 
 def depth_loss_2(y_true, y_pred):
