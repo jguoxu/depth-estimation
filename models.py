@@ -90,30 +90,35 @@ def coarse_network_model():
     b1 = BatchNormalization()(conv1)
     a1 = Activation("relu")(b1)
     p1 = MaxPooling2D(pool_size=(2, 2))(a1)
+    d1 = Dropout(0.1)(p1)
 
-    conv2 = Conv2D(256, (5, 5), padding='same')(p1)
+    conv2 = Conv2D(256, (5, 5), padding='same')(d1)
     b2 = BatchNormalization()(conv2)
     a2 = Activation("relu")(b2)
     p2 = MaxPooling2D(pool_size=(2, 2))(a2)
+    d2 = Dropout(0.25)(p2)
 
-    conv3 = Conv2D(384, (3, 3), padding='same')(p2)
+    conv3 = Conv2D(384, (3, 3), padding='same')(d2)
     b3 = BatchNormalization()(conv3)
     a3 = Activation("relu")(b3)
+    d3 = Dropout(0.25)(b3)
 
-    conv4 = Conv2D(384, (3, 3), padding='same')(a3)
+    conv4 = Conv2D(384, (3, 3), padding='same')(d3)
     b4 = BatchNormalization()(conv4)
     a4 = Activation("relu")(b4)
+    d4 = Dropout(0.5)(a4)
 
-    Dlayer1 = Dense(256)(a4)
+    Dlayer1 = Dense(256)(d4)
     b5 = BatchNormalization()(Dlayer1)
     a5 = Activation("relu")(b5)
     p5 = MaxPooling2D(pool_size=(2, 2))(a5)
+    d5 = Dropout(0.5)(p5)
 
-    flat = Flatten()(p5)
+    flat = Flatten()(d5)
     flat = Dense(4096)(flat)
     flat = BatchNormalization()(flat)
     flat = Activation("linear")(flat)
-    flat = Dropout(0.4)(flat)
+    flat = Dropout(0.5)(flat)
 
     flat = Dense(4070, activation='relu')(flat)
     flat = BatchNormalization()(flat)
@@ -128,12 +133,14 @@ def refined_network_model():
     conv21 = Conv2D(63, (9, 9), strides=(2, 2), padding='valid')(first_layer)
     b21 = BatchNormalization()(conv21)
     p21 = MaxPooling2D(pool_size=(2, 2))(b21)
+    d21 = Dropout(0.25)(p21)
 
-    Concat = concatenate([coarse_output, p21])
+    Concat = concatenate([coarse_output, d21])
     conv22 = Conv2D(64, (5, 5), padding='same')(Concat)
     b22 = BatchNormalization()(conv22)
+    d22 = Dropout(0.25)(b22)
 
-    out = Conv2D(1, (5, 5), padding='same')(b22)
+    out = Conv2D(1, (5, 5), padding='same')(d22)
     out = BatchNormalization()(out)
 
     refine_model = Model(inputs=first_layer, outputs=out)
