@@ -140,7 +140,7 @@ def main():
 
     model.compile(optimizer=keras.optimizers.Adam(),  # Optimizer
                   # Loss function to minimize
-                  loss=models.depth_loss,
+                  loss=models.depth_loss_2,
                   metrics= [metrics.abs_relative_diff, metrics.squared_relative_diff, metrics.rmse, metrics.rmse_log, metrics.rmse_scale_invariance_log])
 
     predict_while_train = PredictWhileTrain(x_train)
@@ -150,11 +150,11 @@ def main():
     print('Fit model on training data')
     if RUN_REFINE:
         history = model.fit(x=x_train, y = y_train, 
-        validation_data=(x_eval, y_eval),
-        epochs=2005, callbacks=[cp_callback_refine, csv_logger, predict_while_train])
+                            validation_data=(x_eval, y_eval),
+                            epochs=300, callbacks=[cp_callback_refine, csv_logger])
     else:
         history = model.fit(x=x_train, y = y_train, validation_data=(x_eval, y_eval),
-                            epochs=2005, callbacks=[cp_callback_coarse, csv_logger, predict_while_train])
+                            epochs=300, callbacks=[cp_callback_coarse, csv_logger])
 
     print('\nHistory dict:', history.history)
 
