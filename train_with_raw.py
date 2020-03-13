@@ -69,8 +69,9 @@ def main():
     x_eval = []
     y_eval = []
     h5file = h5py.File(NYU_FILE_PATH, 'r')
-    file_count = h5file['images'].shape[0]
+    #file_count = h5file['images'].shape[0]
 
+    file_count = 10
     dev_split = 0.9
     train_count = file_count * dev_split
     datagen = ImageDataGenerator()
@@ -107,6 +108,7 @@ def main():
                 augmented_im = Image.fromarray(np.uint8(augmented_im_bytes))
                 agumented_image_name = os.path.join(TRAIN_FILE_PATH, '%05d_c_aug_%d.png' % (i, augment_count))
                 augmented_im.save(agumented_image_name)
+                augmented_im = augmented_im.resize((IMAGE_WIDTH, IMAGE_HEIGHT))
                 augmented_im_arr = np.array(augmented_im)
 
                 # expand depth to 3 channels, keras apply_transform can only tranform 3 channel images.
@@ -122,6 +124,7 @@ def main():
                 augmented_depth = Image.fromarray(np.uint8(single_channel_aug_d))
                 agumented_depth_name = os.path.join(TRAIN_FILE_PATH, '%05d_d_aug_%d.png' % (i, augment_count))
                 augmented_depth.save(agumented_depth_name)
+                augmented_depth = augmented_depth.resize((TARGET_WIDTH, TARGET_HEIGHT))
                 augmented_depth_arr = np.array(augmented_depth)
                 augmented_depth_arr = (augmented_depth_arr * 10.0) / 255.0
                 # train_examples.append((agumented_image_name, agumented_depth_name))
