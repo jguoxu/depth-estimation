@@ -95,7 +95,7 @@ def main():
 
     model.compile(optimizer=keras.optimizers.Adam(),  # Optimizer
                   # Loss function to minimize
-                  loss=models.depth_loss_2,
+                  loss=models.depth_loss,
                   # List of metrics to monitor
                 #   metrics= [metrics.rmse])
                   metrics= [metrics.abs_relative_diff, metrics.squared_relative_diff, metrics.rmse, metrics.rmse_log, metrics.rmse_scale_invariance_log])

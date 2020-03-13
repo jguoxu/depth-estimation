@@ -13,10 +13,12 @@ from tensorflow.keras import layers
 from tensorflow.keras.callbacks import ModelCheckpoint, CSVLogger
 from tensorflow.keras.utils import multi_gpu_model
 from tensorflow.keras.metrics import RootMeanSquaredError
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
 
 # from scipy import imageio
 from PIL import Image
 import numpy as np
+import random
 # import cv2
 
 import h5py
@@ -32,9 +34,11 @@ REFINED_CHECKPOINT_PATH = 'checkpoints/refined/refined_ckpt'
 REFINED_CHECKPOINT_DIR = os.path.dirname(REFINED_CHECKPOINT_PATH)
 PREDICT_FILE_PATH = 'data/predict'
 TRAIN_PREDICT_FILE_PATH = 'data/predict_train'
+TRAIN_FILE_PATH = 'data/train'
 
 RUN_REFINE = False
 NYU_FILE_PATH = 'data/nyu_depth_v2_labeled.mat'
+AUGMENTATION_COUNT = 4 # number of augmentations per image
 
 class PredictWhileTrain(keras.callbacks.Callback):
     def __init__(self, x_train):
@@ -69,6 +73,9 @@ def main():
 
     dev_split = 0.9
     train_count = file_count * dev_split
+    datagen = ImageDataGenerator()
+    if not os.path.isdir(TRAIN_FILE_PATH):
+        os.mkdir(TRAIN_FILE_PATH)
     for i in range(file_count):
         if i % 10 == 0:
             print("processing file " + str(i))
@@ -91,6 +98,35 @@ def main():
         if i < train_count:
             x_train.append(image_np_arr)
             y_train.append(depth_np_arr)
+            for augment_count in range(AUGMENTATION_COUNT):
+                brightness = random.uniform(0.7, 1.0)
+                zoom_scale = random.uniform(0.7, 1.0)
+                flip_horizontal = bool(random.getrandbits(1))
+
+                augmented_im_bytes = datagen.apply_transform(x=image, transform_parameters={'brightness':brightness, 'zx':zoom_scale, 'zy':zoom_scale, 'flip_horizontal':flip_horizontal})
+                augmented_im = Image.fromarray(np.uint8(augmented_im_bytes))
+                agumented_image_name = os.path.join(TRAIN_FILE_PATH, '%05d_c_aug_%d.png' % (i, augment_count))
+                augmented_im.save(agumented_image_name)
+                augmented_im_arr = np.array(augmented_im)
+
+                # expand depth to 3 channels, keras apply_transform can only tranform 3 channel images.
+                depth_multi_channel = np.array([depth, depth, depth])
+                # tranpose depth image to (height, width, channel)
+                depth_multi_channel = np.transpose(depth_multi_channel, (1, 2, 0))
+
+                augmented_depth_bytes = datagen.apply_transform(x=depth_multi_channel, transform_parameters={'zx':zoom_scale, 'zy':zoom_scale, 'flip_horizontal':flip_horizontal})
+
+                # get back single channel depth
+                single_channel_aug_d = augmented_depth_bytes[:, :, 0]
+                single_channel_aug_d = (single_channel_aug_d / 10.0) * 255.0
+                augmented_depth = Image.fromarray(np.uint8(single_channel_aug_d))
+                agumented_depth_name = os.path.join(TRAIN_FILE_PATH, '%05d_d_aug_%d.png' % (i, augment_count))
+                augmented_depth.save(agumented_depth_name)
+                augmented_depth_arr = np.array(augmented_depth)
+                augmented_depth_arr = (augmented_depth_arr * 10.0) / 255.0
+                # train_examples.append((agumented_image_name, agumented_depth_name))
+                x_train.append(augmented_im_arr)
+                y_train.append(augmented_depth_arr)
         else:
             x_eval.append(image_np_arr)
             y_eval.append(depth_np_arr)
@@ -140,8 +176,8 @@ def main():
 
     model.compile(optimizer=keras.optimizers.Adam(),  # Optimizer
                   # Loss function to minimize
-                  loss=models.depth_loss_2,
-                  metrics= [metrics.abs_relative_diff, metrics.squared_relative_diff, metrics.rmse, metrics.rmse_log, metrics.rmse_scale_invariance_log])
+                  loss=models.depth_loss,
+                  metrics= [metrics.abs_relative_diff, metrics.squared_relative_diff, metrics.rmse])
 
     predict_while_train = PredictWhileTrain(x_train)
     early_stop = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=5)
@@ -151,10 +187,10 @@ def main():
     if RUN_REFINE:
         history = model.fit(x=x_train, y = y_train, 
                             validation_data=(x_eval, y_eval),
-                            epochs=300, callbacks=[cp_callback_refine, csv_logger])
+                            epochs=1000, callbacks=[cp_callback_refine, csv_logger])
     else:
         history = model.fit(x=x_train, y = y_train, validation_data=(x_eval, y_eval),
-                            epochs=300, callbacks=[cp_callback_coarse, csv_logger])
+                            epochs=1000, callbacks=[cp_callback_coarse, csv_logger])
 
     print('\nHistory dict:', history.history)
 
