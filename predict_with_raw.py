@@ -42,7 +42,7 @@ def main():
     file_count = h5file['images'].shape[0]
 
     # file_count = 100
-    dev_split = 0.8
+    dev_split = 0.9
     train_count = file_count * dev_split
     for i in range(file_count):
         if i < train_count:
@@ -67,7 +67,7 @@ def main():
             x_eval.append(image_np_arr)
             y_eval.append(depth_np_arr)
 
-    x_eval = np.array(x_eval) / 1.0
+    x_eval = np.array(x_eval) / 255.0
     y_eval = np.array(y_eval)
 
     latest_checkpoint_refine = tf.train.latest_checkpoint(REFINED_CHECKPOINT_DIR)
@@ -95,7 +95,7 @@ def main():
 
     model.compile(optimizer=keras.optimizers.Adam(),  # Optimizer
                   # Loss function to minimize
-                  loss=models.depth_loss,
+                  loss=models.depth_loss_2,
                   # List of metrics to monitor
                 #   metrics= [metrics.rmse])
                   metrics= [metrics.abs_relative_diff, metrics.squared_relative_diff, metrics.rmse, metrics.rmse_log, metrics.rmse_scale_invariance_log])
