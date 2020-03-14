@@ -120,7 +120,7 @@ def main():
 
                 # get back single channel depth
                 single_channel_aug_d = augmented_depth_bytes[:, :, 0]
-                single_channel_aug_d = (single_channel_aug_d / 10.0) * 255.0
+                single_channel_aug_d = (single_channel_aug_d * zoom_scale / 10.0) * 255.0
                 augmented_depth = Image.fromarray(np.uint8(single_channel_aug_d))
                 agumented_depth_name = os.path.join(TRAIN_FILE_PATH, '%05d_d_aug_%d.png' % (i, augment_count))
                 augmented_depth.save(agumented_depth_name)
