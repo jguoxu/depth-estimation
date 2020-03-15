@@ -106,8 +106,8 @@ def main():
 
                 augmented_im_bytes = datagen.apply_transform(x=image, transform_parameters={'brightness':brightness, 'zx':zoom_scale, 'zy':zoom_scale, 'flip_horizontal':flip_horizontal})
                 augmented_im = Image.fromarray(np.uint8(augmented_im_bytes))
-                agumented_image_name = os.path.join(TRAIN_FILE_PATH, '%05d_c_aug_%d.png' % (i, augment_count))
-                augmented_im.save(agumented_image_name)
+                # agumented_image_name = os.path.join(TRAIN_FILE_PATH, '%05d_c_aug_%d.png' % (i, augment_count))
+                # augmented_im.save(agumented_image_name)
                 augmented_im = augmented_im.resize((IMAGE_WIDTH, IMAGE_HEIGHT))
                 augmented_im_arr = np.array(augmented_im)
 
@@ -122,8 +122,8 @@ def main():
                 single_channel_aug_d = augmented_depth_bytes[:, :, 0]
                 single_channel_aug_d = (single_channel_aug_d / 10.0) * 255.0
                 augmented_depth = Image.fromarray(np.uint8(single_channel_aug_d))
-                agumented_depth_name = os.path.join(TRAIN_FILE_PATH, '%05d_d_aug_%d.png' % (i, augment_count))
-                augmented_depth.save(agumented_depth_name)
+                # agumented_depth_name = os.path.join(TRAIN_FILE_PATH, '%05d_d_aug_%d.png' % (i, augment_count))
+                # augmented_depth.save(agumented_depth_name)
                 augmented_depth = augmented_depth.resize((TARGET_WIDTH, TARGET_HEIGHT))
                 augmented_depth_arr = np.array(augmented_depth)
                 augmented_depth_arr = (augmented_depth_arr * 10.0) / 255.0
@@ -179,7 +179,7 @@ def main():
 
     model.compile(optimizer=keras.optimizers.Adam(),  # Optimizer
                   # Loss function to minimize
-                  loss=models.depth_loss,
+                  loss=models.depth_loss_2,
                   metrics= [metrics.abs_relative_diff, metrics.squared_relative_diff, metrics.rmse])
 
     predict_while_train = PredictWhileTrain(x_train)
@@ -190,10 +190,10 @@ def main():
     if RUN_REFINE:
         history = model.fit(x=x_train, y = y_train, 
                             validation_data=(x_eval, y_eval),
-                            epochs=1000, callbacks=[cp_callback_refine, csv_logger])
+                            epochs=300, callbacks=[cp_callback_refine, csv_logger])
     else:
         history = model.fit(x=x_train, y = y_train, validation_data=(x_eval, y_eval),
-                            epochs=1000, callbacks=[cp_callback_coarse, csv_logger])
+                            epochs=300, callbacks=[cp_callback_coarse, csv_logger])
 
     print('\nHistory dict:', history.history)
 
