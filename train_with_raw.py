@@ -69,9 +69,8 @@ def main():
     x_eval = []
     y_eval = []
     h5file = h5py.File(NYU_FILE_PATH, 'r')
-    #file_count = h5file['images'].shape[0]
+    file_count = h5file['images'].shape[0]
 
-    file_count = 10
     dev_split = 0.9
     train_count = file_count * dev_split
     datagen = ImageDataGenerator()
