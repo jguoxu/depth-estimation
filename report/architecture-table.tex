@@ -1,0 +1,75 @@
+\section{Appendix}
+\begin{table}[h!]
+\centering
+\begin{tabular}{ |p{3cm}|p{4cm}|p{2cm}|p{2cm}|p{2cm}| }
+ \hline
+ \multicolumn{5}{|c|}{\textbf{Coarse Model}} \\
+ \hline
+ & Input size to layer & Filter size & Stride & Dropout Rate\\
+ \hline
+ 1: Conv & 228 X 304 X 3 (Image) & 11 X 11 & 4 & \\
+ 1: Batch Norm & 55 X 74 X 96 & & & \\
+ 1: Dropout & 55 X 74 X 96 & & & 0.1 \\
+ 1: Max Pool & 55 X 74 X 96 & 3 X 3 & 2 & \\
+ \hline
+ 2: Conv & 27 X 36 X 96 & 5 X 5 & 2 & \\
+ 2: Batch Norm & 23 X 32 X 256 & & & \\
+ 2: Dropout & 23 X 32 X 256 & & & 0.25 \\
+ 2: Max Pool & 23 X 32 X 256 & 3 X 3 & 2 & \\
+ \hline
+ 3: Conv & 12 X 16 X 56 & 3 X 3 & 1 & \\
+ 3: Batch Norm & 10 X 14 X 384 & & & \\
+ 3: Dropout & 10 X 14 X 384 & & & 0.25 \\
+ \hline
+ 4: Conv & 10 X 14 X 384 & 3 X 3 & 1 & \\
+ 4: Batch Norm & 8 X 12 X 384 & & & \\
+ 4: Dropout & 8 X 12 X 384 & & & 0.5 \\
+ \hline
+ 5: Conv & 8 X 12 X 384 & 3 X 3 & 1 & \\
+ 5: Batch Norm & 6 X 10 X 256 & & & \\
+ 5: Dropout & 6 X 10 X 256 & & & 0.5 \\
+ \hline
+ 6: FC & 15360 (6 X 10 X 256) & & & \\
+ 6: Batch Norm & 15360 & & & \\
+ 6: Dropout & 15360 & & & 0.5 \\
+ \hline
+ 7: FC & 4096 & & & \\
+ 7: Batch Norm & 4096 & & & \\
+ 7: Dropout & 4096 & & & 0.5 \\
+ \hline
+ \textbf{Output} & \textbf{4070 (55 X 74)} & & & \\
+ \hline
+\end{tabular}
+\caption{Coarse Model Table}
+\label{table:1}
+\end{table}
+
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{ |p{3cm}|p{4cm}|p{2cm}|p{2cm}|p{2cm}| }
+ \hline
+ \multicolumn{5}{|c|}{\textbf{Refine Model}} \\
+ \hline
+ & Input size to layer & Filter size & Stride & Dropout Rate\\
+ \hline
+ 1: Conv & 228 X 304 X 3 (Image) & 9 X 9 & 2 & \\
+ 1: Batch Norm & 110 X 148 X 63 & & & \\
+ 1: Dropout & 110 X 148 X 63 & & & 0.25 \\
+ 1: Max Pool & 110 X 148 X 63 & 3 X 3 & 2 & \\
+ \hline
+ 2: Fine 1 + Coarse Output & 55 X 74 X 63 & & & \\
+ \hline
+ 3: Conv & 55 X 74 X 64 & 5 X 5 & 1 & \\
+ 3: Batch Norm & 55 X 74 X 64 & & & \\
+ 3: Dropout & 55 X 74 X 64 & & & 0.25 \\
+ \hline
+ 4: Conv & 55 X 74 X 64 & 5 X 5 & 1 & \\
+ 4: Batch Norm & 55 X 74 X 64 & & & \\
+ \hline
+ \textbf{Output} & \textbf{55 X 74 X 1} & & & \\
+ \hline
+\end{tabular}
+\caption{Refine Model Table}
+\label{table:2}
+\end{table}

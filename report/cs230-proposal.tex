@@ -1,0 +1,126 @@
+\documentclass{article}
+\usepackage[final]{nips_2017}
+\usepackage[utf8]{inputenc} % allow utf-8 input
+\usepackage[T1]{fontenc}    % use 8-bit T1 fonts
+\usepackage{hyperref}       % hyperlinks
+\usepackage{url}            % simple URL typesetting
+\usepackage{booktabs}       % professional-quality tables
+\usepackage{amsfonts}       % blackboard math symbols
+\usepackage{nicefrac}       % compact symbols for 1/2, etc.
+\usepackage{microtype}      % microtypography
+\usepackage{graphicx}
+\title{Depth Image Estimation From RGB Image Using Deep Learning}
+
+\author{
+  Xu Guo\\
+  Stanford University\\
+  \texttt{xuguo@stanford.edu} \\
+  %% examples of more authors
+  \And
+  Meijiao Png\\
+  Stanford University\\
+  \texttt{mpng@stanford.edu} \\
+  \And
+  Isha Singhal\\
+  Stanford University\\
+  \texttt{isha22@stanford.edu} \\
+  %% Coauthor \\
+  %% Affiliation \\
+  %% Address \\
+  %% \texttt{email} \\
+  %% \AND
+  %% Coauthor \\
+  %% Affiliation \\
+  %% Address \\
+  %% \texttt{email} \\
+  %% \And
+  %% Coauthor \\
+  %% Affiliation \\
+  %% Address \\
+  %% \texttt{email} \\
+  %% \And
+  %% Coauthor \\
+  %% Affiliation \\
+  %% Address \\
+  %% \texttt{email} \\
+}
+
+\begin{document}
+% \nipsfinalcopy is no longer used
+
+\begin{center}
+\includegraphics[width=3cm, height=0.7cm]{CS230}
+\end{center}
+
+\maketitle
+
+\section{Introduction}	
+RGB-D images augment conventional RGB images with additional depth information on a per-pixel basis. This additional information can be used in various applications that include 3D reconstruction, AR/VR and image processing.  
+
+While modern consumer technology such as smartphones have enabled more people to take RGB photos, it is still difficult to obtain RGB-D images. There has been numerous efforts in industry to integrate specialized sensors into hardware to capture depth information (Google Project Tango, lenovo Phab2 pro, intel realsense). However, the efforts have not been successful because depth sensing capabilities require extra hardware, accurate calibration and extra design space. It is usually hard to justify the large BOM cost (bill of material cost), production line change, and drastic industrial design change of the phone to incorporate depth sensors.
+
+In this paper, we evaluate deep learning approaches to construct “application ready” depth image using a single RGB camera image, which leapfrogs the need of specialized depth sensor.
+
+
+\section{Dataset}
+One prominent dataset is the NYU Depth dataset \cite{nyu_dataset} which contains 1449 pairs of RGB to RGB-D images of indoor scenes recorded by Microsoft Kinect. The images contain the raw rgb, depth and IMU data provided by Kinect. 
+
+Additionally, smaller datasets are available for single objects. 300 paired images of objects are available in the RGB-D Object Dataset \cite{uw_dataset} and 125 objects are available in the BigBird \cite{big_bird_dataset} dataset with more extensive image data such as pose information and point clouds. We would focus primarily on the first dataset.
+
+The diversity is high across different datasets, and the amount of data is sufficient for the proposed project.
+
+\section{ Methods }
+We will start with a multi-scale deep network using CNNs to predict the depth of RGB images, inspired by this research paper \cite{nips-1}. This model is made up of two component stacks. The first layer will predict a coarse global output based on the entire image area, combining information from different parts of the image through max-pooling and convolution. The second will refine the prediction from the first layer with finer-scale local details such as object edges. 
+
+We aim to improve the results of this model by training on more datasets. Additionally, we will explore using other CNN architectures \cite{pp1}, encoder-decoder architectures \cite{pp3} and GAN \cite{pp2} to augment our results for better performance.  
+
+\section{Evaluation}
+Our dataset will be split in 3 parts: training, validation and testing dataset. Our model’s performance will be evaluated on testing dataset and will be compared with other state of the art models. We will use standard metrics to evaluate the predicted depth maps $\hat{D}$. The evaluation metrics are listed below, where M refers to the size of the test set, Di denotes the ground truth depth values, and $\hat{D}(i)$ denotes the predicted depth values:
+\begin{itemize}
+\item (rel) Mean Relative Error: $1/m \sum_{i=1}^{m}\left \| D(i) - \hat{D(i)}) \right \| / D(i))$
+\item (rmse) Root Mean Squared Error: $\sqrt{1/m \sum_{i=1}^{m}\left \| D(i) - \hat{D(i)}) \right \|^{2}}$
+\item (log10) Log10 error: $1/m \sum_{i=1}^{m}\left \| logD(i) - log\hat{D(i)}) \right \|$
+\item ($\delta$) Threshold Accuracy: \% of $D(i)$ s.t. $\left [ max( \frac{D(i)}{\hat{D(i)}}, \frac{\hat{D(i)}}{D(i)}) = \delta \right ] < $ threshold, where threshold $\in  \left \{ 1.25, 1.25^{2}, 1.25^{3} \right \}$
+\end{itemize}
+
+
+\medskip
+\small
+\begin{thebibliography}{8}
+
+\bibitem{nyu_dataset} 
+\textit{https://cs.nyu.edu/~silberman/datasets}
+
+\bibitem{uw_dataset}
+\textit{http://rgbd-dataset.cs.washington.edu/}
+
+\bibitem{big_bird_dataset} 
+\textit{http://rll.berkeley.edu/bigbird/}
+ 
+\bibitem{nips-1} 
+David Eigen, Christian Puhrsch, Rob Fergus
+\textit{Depth Map Prediction from a Single Image using a Multi-Scale Deep Network}.
+Curran Associates, Inc., NIPS2014-5539, 2014.
+ 
+\bibitem{depth-map-prediction-github}
+\textit{https://github.com/imran3180/depth-map-prediction}
+
+\bibitem{pp1} 
+David Eigen, Rob Fergus
+\textit{Predicting Depth, Surface Normals and Semantic Labels with a Common Multi-Scale Convolutional Architecture}. 
+ICCV, pp.2650-2658 609--616, 2015.
+
+\bibitem{pp2} 
+Daniel Stanley Tan, Chih-Yuan Yao, Conrado Ruiz, Jr., and Kai-Lung Hua
+\textit{Single-Image Depth Inference Using Generative Adversarial Networks}.
+2019 Apr 10. doi: 10.3390/s19071708
+
+\bibitem{pp3} 
+Shir Gur, Lior Wolf
+\textit{Single Image Depth Estimation Trained via Depth From Defocus Cues}.
+The IEEE Conference on Computer Vision and Pattern Recognition (CVPR), 2019, pp. 7683-7692
+
+
+\end{thebibliography}
+
+\end{document}
